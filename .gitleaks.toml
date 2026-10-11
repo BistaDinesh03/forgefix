@@ -1,0 +1,6 @@
+title = "ForgeFix gitleaks configuration"
+
+# Extends the standard gitleaks ruleset; no repository-specific
+# allowlists are configured on purpose (nothing secret may be committed).
+[extend]
+useDefault = true

@@ -1,0 +1,21 @@
+site_name: ForgeFix
+site_description: One command to set up, health-check, and repair any open-source project
+repo_url: https://github.com/BistaDinesh03/forgefix
+edit_uri: ""
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: teal
+nav:
+  - Home: index.md
+  - CLI: cli.md
+  - Plugins: plugins.md
+  - HTTP API: api.md
+  - Monetization (roadmap): monetization.md
+  - FAQ: faq.md
+markdown_extensions:
+  - admonition
+  - tables
+  - pymdownx.highlight
+  - pymdownx.superfences

@@ -1,0 +1,8 @@
+services:
+  forgefix:
+    build: .
+    image: forgefix:local
+    working_dir: /work
+    volumes:
+      - .:/work
+    command: ["--help"]
