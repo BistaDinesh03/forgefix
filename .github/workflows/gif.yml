@@ -31,12 +31,16 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends ffmpeg fonts-dejavu-core
-      - name: Install vhs
+      - name: Install vhs and ttyd
         run: |
-          curl -sSL "https://github.com/charmbracelet/vhs/releases/download/v0.12.1/vhs_0.12.1_Linux_x86_64.tar.gz" \
-            | sudo tar xz -C /usr/local/bin vhs
-          sudo chmod +x /usr/local/bin/vhs
+          curl -sSL -o /tmp/vhs.tar.gz "https://github.com/charmbracelet/vhs/releases/download/v0.12.1/vhs_0.12.1_Linux_x86_64.tar.gz"
+          mkdir -p /tmp/vhs-extract
+          tar xzf /tmp/vhs.tar.gz -C /tmp/vhs-extract
+          sudo install -m755 "$(find /tmp/vhs-extract -type f -name vhs | head -n1)" /usr/local/bin/vhs
+          curl -sSL -o /tmp/ttyd "https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.x86_64"
+          sudo install -m755 /tmp/ttyd /usr/local/bin/ttyd
           vhs --version
+          ttyd --version
       - name: Record demo
         run: make gif
       - name: Size budget check (< 3 MB)
