@@ -41,9 +41,9 @@ format:
 	ruff check --fix .
 	ruff format .
 
-## gif: regenerate demo/demo.gif with vhs (see CONTRIBUTING.md)
+## gif: regenerate demo/demo.gif + demo/demo.mp4 with vhs (see CONTRIBUTING.md)
 gif:
-	vhs demo/demo.tape
+	vhs demo/demo.tape -o demo/demo.mp4
 
 ## release: tag and push a release (usage: make release TAG=v0.2.0)
 release:
