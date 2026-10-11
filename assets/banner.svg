@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" width="1280" height="320"
+     role="img" aria-label="ForgeFix — one command to fix any repo's setup">
+  <title>ForgeFix — one command to fix any repo's setup</title>
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1E293B" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#1E293B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background: slate-900 with one subtle glow behind the mark -->
+  <rect width="1280" height="320" fill="#0F172A"/>
+  <ellipse cx="160" cy="160" rx="300" ry="220" fill="url(#glow)"/>
+
+  <!-- Mark: hexagon + F, scaled 5x (monoline scales with it) -->
+  <g transform="translate(96,100) scale(5)"
+     fill="none" stroke="#E2E8F0" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 2 L20.66 7 L20.66 17 L12 22 L3.34 17 L3.34 7 Z"/>
+    <path d="M10 17 V7 H15 M10 12 H13.5"/>
+  </g>
+
+  <!-- Checkmark accent: the "fixed" landing just outside the mark -->
+  <path d="M206 202 L214 210 L230 190"
+        fill="none" stroke="#16A34A" stroke-width="7"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Wordmark + tagline -->
+  <text x="252" y="168" font-size="66" font-weight="700" fill="#F8FAFC"
+        font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">ForgeFix</text>
+  <text x="254" y="214" font-size="27" fill="#94A3B8"
+        font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">One command to fix any repo&apos;s setup.</text>
+</svg>

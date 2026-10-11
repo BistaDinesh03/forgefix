@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+     fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round"
+     role="img" aria-label="ForgeFix">
+  <title>ForgeFix</title>
+  <!-- Pointy-top hexagon, radius 10, centered (12, 12) -->
+  <path d="M12 2 L20.66 7 L20.66 17 L12 22 L3.34 17 L3.34 7 Z"/>
+  <!-- Monoline F: stem 10,17 -> 10,7; top bar to 15; mid bar to 13.5 -->
+  <path d="M10 17 V7 H15 M10 12 H13.5"/>
+</svg>
