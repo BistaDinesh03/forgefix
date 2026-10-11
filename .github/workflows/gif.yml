@@ -22,6 +22,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Push with an owner PAT (PUSH_TOKEN). The built-in GITHUB_TOKEN cannot
+          # bypass branch protection on a personal repo: GitHub rejects the Actions
+          # integration as a ruleset bypass actor, so the push must evaluate as
+          # the owner (who has the bypass). Forks without the secret fall back to
+          # GITHUB_TOKEN and simply cannot push the refresh commit.
+          token: ${{ secrets.PUSH_TOKEN }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
