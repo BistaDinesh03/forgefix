@@ -18,7 +18,12 @@ from forgefix.core.scanner import scan
 
 
 def _resolve(path: str) -> Path:
-    root = Path(path).expanduser().resolve()
+    base = Path.cwd().resolve()
+    root = (base / path).expanduser().resolve()
+    try:
+        root.relative_to(base)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="path escapes allowed root")
     if not root.is_dir():
         raise HTTPException(status_code=400, detail=f"not a directory: {path}")
     return root
