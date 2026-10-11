@@ -41,11 +41,21 @@ brew install vhs ffmpeg
 sudo apt-get install -y ffmpeg
 # Windows (winget)
 winget install charmbracelet.vhs Gyan.FFmpeg
-make gif            # writes demo/demo.gif, keep it under 3 MB
+make gif            # writes demo/demo.gif + demo/demo.mp4
 ```
 
-CI runs the same tape on `workflow_dispatch` (or when `demo/demo.tape` changes) and
-commits the refreshed GIF back to `main`.
+CI runs the same tape on `workflow_dispatch` (or when the tape files change) and commits
+the refreshed GIF and MP4 back to `main` via `PUSH_TOKEN`. The workflow fails if the GIF
+is larger than 4 MB or smaller than 800 KB.
+
+Notes that save re-recording time:
+
+- `forgefix up --apply` streams its outcomes only when the whole plan finishes, so the
+  tape waits out the full run (`Sleep 45s`). Expect a session of about 65 seconds.
+- If your checkout lives inside a sync client (OneDrive, Dropbox), record from a plain
+  copy of `demo/` + `tests/fixtures/` outside the sync root: sync engines can drop or
+  relocate files that appear mid-recording, which leaves a half-repaired scratch repo.
+  The CI recorder (a clean Linux checkout) is unaffected.
 
 **Fallback when vhs is unavailable:** record an asciinema cast instead and attach it to
 the PR — the tape commands are exactly the CLI session you would record:
@@ -57,6 +67,17 @@ asciinema rec demo/demo.cast   # run: forgefix --help; forgefix doctor --path te
 
 Commit `demo/demo.cast` (a few KB, reviewable text) and mention in the PR that the GIF
 needs regeneration via the Demo GIF workflow.
+
+## Visual identity
+
+Colors, typography, and asset rules live in [assets/brand.md](assets/brand.md). Summary:
+
+- Use the documented palette tokens only. Flat fills; no multi-stop gradients on the mark.
+- No custom web fonts in docs or README — GitHub's rendered defaults only.
+- Raster assets (`logo.png`, `social-preview.png`) are generated from the SVG geometry by
+  `python assets/render_rasters.py`; edit the SVGs, then re-render.
+- New docs and READMEs: no emoji headers, no ALL CAPS words, no marketing superlatives
+  ("revolutionary", "blazing fast", "10x"). Short sentences, active voice, verifiable claims.
 
 ## Pull request checklist
 
