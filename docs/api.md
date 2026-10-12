@@ -6,7 +6,7 @@ Binds `127.0.0.1:8000` by default; do not expose to untrusted networks.
 ## `GET /health`
 
 ```json
-{"status": "ok", "version": "0.1.1"}
+{"status": "ok", "version": "0.1.2"}
 ```
 
 ## `GET /doctor?path=.`

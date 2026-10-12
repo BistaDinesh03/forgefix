@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-12
+
+Documentation and release-tooling patch. No CLI or plugin behavior changes.
+Ships the fixed README to PyPI: version 0.1.1's page still used repo-relative
+image paths, which do not render on PyPI.
+
+### Added
+
+- `.github/workflows/docker.yml`: multi-arch (linux/amd64 + linux/arm64) image
+  published to `ghcr.io/bistadinesh03/forgefix`, with a
+  `docker run --rm ... --version` smoke test; triggers on Dockerfile changes
+  to main, `v*` tags, and manual dispatch
+- Static, human-only Contributors section (a dynamic contributor image would
+  also render bot accounts)
+
+### Changed
+
+- README images (banner light/dark, demo GIF, score badge, demo links) now load
+  from `cdn.jsdelivr.net/gh/...@main`, so the PyPI project page renders them;
+  a source comment documents why they must stay absolute
+- Downloads badge now links to pepy.tech from a shields badge instead of the
+  empty `pypi/dm` badge; the Ruff/Bandit row is unchanged
+- GIF workflow attributes refresh commits to the maintainer noreply identity
+  instead of `github-actions[bot]`
+
 ## [0.1.1] - 2026-10-12
 
 Packaging and documentation release. No CLI or plugin behavior changes.
@@ -61,6 +86,7 @@ Packaging and documentation release. No CLI or plugin behavior changes.
   multi-stage non-root Docker image, devcontainer, Makefile
 - Docs site (mkdocs-material): index, cli, plugins, api, faq, monetization
 
-[Unreleased]: https://github.com/BistaDinesh03/forgefix/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/BistaDinesh03/forgefix/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/BistaDinesh03/forgefix/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/BistaDinesh03/forgefix/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/BistaDinesh03/forgefix/releases/tag/v0.1.0
