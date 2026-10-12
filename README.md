@@ -1,7 +1,10 @@
+<!-- Images use absolute jsDelivr URLs, not repo-relative paths, because this
+     README is also rendered on PyPI (long_description), where relative paths
+     resolve to pypi.org and show broken images. @main keeps them current. -->
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
-    <img src="assets/banner.svg" alt="ForgeFix - one command to fix any repo's setup" width="100%">
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.jsdelivr.net/gh/BistaDinesh03/forgefix@main/assets/banner-dark.svg">
+    <img src="https://cdn.jsdelivr.net/gh/BistaDinesh03/forgefix@main/assets/banner.svg" alt="ForgeFix - one command to fix any repo's setup" width="100%">
   </picture>
 </p>
 
@@ -13,7 +16,7 @@
   <a href="https://github.com/BistaDinesh03/forgefix/actions/workflows/ci.yml"><img src="https://github.com/BistaDinesh03/forgefix/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/BistaDinesh03/forgefix/actions/workflows/codeql.yml"><img src="https://github.com/BistaDinesh03/forgefix/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"></a>
   <img src="https://img.shields.io/pypi/v/forgefix" alt="PyPI version">
-  <img src="https://img.shields.io/pypi/dm/forgefix" alt="PyPI downloads">
+  <a href="https://pepy.tech/project/forgefix"><img src="https://img.shields.io/badge/downloads-see%20pepy.tech-blue" alt="Downloads: see pepy.tech"></a>
   <img src="https://img.shields.io/pypi/pyversions/forgefix" alt="Python 3.11+">
   <img src="https://img.shields.io/badge/license-MIT-2563EB" alt="License: MIT">
   <img src="https://img.shields.io/badge/ruff-checked-2563EB" alt="Ruff checked">
@@ -31,7 +34,7 @@
 ## Demo
 
 <p align="center">
-  <img src="demo/demo.gif" alt="ForgeFix fixing a broken repo: score 42 → 91 in one command" width="100%">
+  <img src="https://cdn.jsdelivr.net/gh/BistaDinesh03/forgefix@main/demo/demo.gif" alt="ForgeFix fixing a broken repo: score 42 → 91 in one command" width="100%">
 </p>
 
 What you are watching:
@@ -43,10 +46,10 @@ What you are watching:
    project, writes `requirements.lock`, and runs the test suite.
 4. `forgefix doctor` again — the same repo now scores **91/100**.
 
-<img src="assets/badge-score.svg" alt="health: 42 to 91" height="20">
+<img src="https://cdn.jsdelivr.net/gh/BistaDinesh03/forgefix@main/assets/badge-score.svg" alt="health: 42 to 91" height="20">
 
-Still frame: [demo/demo-thumb.png](demo/demo-thumb.png) · MP4 for social:
-[demo/demo.mp4](demo/demo.mp4)
+Still frame: [demo/demo-thumb.png](https://cdn.jsdelivr.net/gh/BistaDinesh03/forgefix@main/demo/demo-thumb.png) · MP4 for social:
+[demo/demo.mp4](https://cdn.jsdelivr.net/gh/BistaDinesh03/forgefix@main/demo/demo.mp4)
 
 ## The problem
 
@@ -303,6 +306,13 @@ nothing is copied from inspected projects.
 
 Built with Typer, FastAPI, and Pydantic. Demo recorded with [VHS](https://github.com/charmbracelet/vhs).
 
-Made by [@BistaDinesh03](https://github.com/BistaDinesh03)
+## Contributors
+
+- [@BistaDinesh03](https://github.com/BistaDinesh03) - maintainer
+
+<!-- Hand-maintained, human-only list on purpose. A dynamic contributor image
+     (contrib.rocks / all-contributors) also renders bot accounts -
+     dependabot[bot], github-actions[bot], github-advanced-security[bot] -
+     which are automation, not people. Add humans here by hand. -->
 
 [contributing]: CONTRIBUTING.md
