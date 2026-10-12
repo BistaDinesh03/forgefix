@@ -250,7 +250,7 @@ forgefix serve                       # http://127.0.0.1:8000
 
 ```console
 $ curl http://127.0.0.1:8000/health
-{"status":"ok","version":"0.1.0"}
+{"status":"ok","version":"0.1.1"}
 
 $ curl "http://127.0.0.1:8000/doctor?path=."
 {"path": "...", "score": {"total": 42, ...}, "findings": [...], "plugins": [...]}

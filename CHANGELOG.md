@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-12
+
+Packaging and documentation release. No CLI or plugin behavior changes.
+
+### Added
+
+- Visual identity in `assets/`: `logo.svg`, `logo-dark.svg`, `logo-mono.svg`,
+  `favicon.svg`, `badge-score.svg`, `banner.svg`, `banner-dark.svg`,
+  `social-preview.svg`, plus rendered `logo.png` and `social-preview.png`
+- `assets/brand.md` (palette, grid, regeneration commands) and
+  `assets/render_rasters.py` (PNG regeneration via Pillow)
+- `scripts/validate_assets.py` (local gate for the asset rules)
+- `CITATION.cff`, `.github/CODEOWNERS`, `.github/FUNDING.yml`,
+  `.github/ISSUE_TEMPLATE/` (bug report, feature request, config),
+  `.github/PULL_REQUEST_TEMPLATE.md`, `.gitattributes`
+- Demo media: `demo/demo.mp4`, `demo/demo-thumb.png`, `demo/prep_scratch.py`
+
+### Changed
+
+- README rewritten and restructured into 16 sections; every claim traced to a
+  code path or command
+- `demo/demo.tape` refreshed; `demo/demo.gif` regenerated from it
+- `CONTRIBUTING.md`, `Makefile`, `docs/index.md`, `.gitignore` updated
+- CI: `actions/checkout` v7, `github/codeql-action` v4, `actions/setup-python` v7,
+  `actions/upload-artifact` v7, `actions/download-artifact` v8
+- GIF workflow hardened (size gates, pinned tool installs)
+
+### Fixed
+
+- `forgefix/server.py`: path-escape handler re-raises with `raise ... from exc`
+  (ruff B904)
+
 ## [0.1.0] - 2026-10-11
 
 ### Added
@@ -29,5 +61,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   multi-stage non-root Docker image, devcontainer, Makefile
 - Docs site (mkdocs-material): index, cli, plugins, api, faq, monetization
 
-[Unreleased]: https://github.com/BistaDinesh03/forgefix/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/BistaDinesh03/forgefix/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/BistaDinesh03/forgefix/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/BistaDinesh03/forgefix/releases/tag/v0.1.0

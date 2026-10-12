@@ -5,4 +5,4 @@ All code in this package is original. ForgeFix reads repository *metadata*
 from other projects.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
