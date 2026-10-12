@@ -22,7 +22,7 @@ jobs:
   gif:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Push with an owner PAT (PUSH_TOKEN). The built-in GITHUB_TOKEN cannot
           # bypass branch protection on a personal repo: GitHub rejects the Actions
