@@ -30,7 +30,7 @@ jobs:
           # the owner (who has the bypass). Forks without the secret fall back to
           # GITHUB_TOKEN and simply cannot push the refresh commit.
           token: ${{ secrets.PUSH_TOKEN }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           # Warm the pip cache: the tape's prep step and `forgefix up --apply`
