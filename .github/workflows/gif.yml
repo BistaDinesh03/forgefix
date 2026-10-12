@@ -1,7 +1,7 @@
 name: Demo GIF
 
-# Regenerates demo/demo.gif with vhs and commits it back to main.
-# Trigger manually (workflow_dispatch) or when the tape script changes.
+# Regenerates demo/demo.gif AND demo/demo.mp4 with vhs and commits them back
+# to main. Trigger manually (workflow_dispatch) or when the tape changes.
 
 on:
   workflow_dispatch:
@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - demo/demo.tape
+      - demo/prep_scratch.py
 
 permissions:
   contents: write
@@ -32,6 +33,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          # Warm the pip cache: the tape's prep step and `forgefix up --apply`
+          # install setuptools/pytest into the scratch venv on camera.
+          cache: pip
       - name: Install forgefix (the tape runs the real CLI)
         run: python -m pip install -e .
       - name: Install ffmpeg and fonts
@@ -48,21 +52,22 @@ jobs:
           sudo install -m755 /tmp/ttyd /usr/local/bin/ttyd
           vhs --version
           ttyd --version
-      - name: Record demo
+      - name: Record demo (gif + mp4 from one session)
         run: make gif
-      - name: Size budget check (< 3 MB)
+      - name: Size budget check (800 KB < gif < 4 MB)
         run: |
           size=$(stat -c%s demo/demo.gif)
           echo "demo.gif is $size bytes"
-          test "$size" -lt 3000000
-      - name: Commit refreshed demo.gif
+          test "$size" -gt 800000
+          test "$size" -lt 4000000
+      - name: Commit refreshed demo.gif and demo.mp4
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add demo/demo.gif
+          git add demo/demo.gif demo/demo.mp4
           if git diff --staged --quiet; then
-            echo "demo.gif unchanged"
+            echo "demo assets unchanged"
           else
-            git commit -m "demo: regenerate demo.gif [skip ci]"
+            git commit -m "demo: regenerate demo.gif and demo.mp4 [skip ci]"
             git push
           fi

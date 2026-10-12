@@ -1,55 +1,68 @@
 # ForgeFix demo tape - recorded with vhs (charmbracelet/vhs).
 # Every command here runs the REAL CLI; nothing in the output is staged.
 #
-#   make gif        # or: vhs demo/demo.tape
+#   make gif     # writes demo/demo.gif and demo/demo.mp4
 #
-# The session works on a scratch copy of tests/fixtures/broken_repo so the
-# fixtures themselves are never mutated (prep_scratch.py is cross-platform).
+# The session works on a scratch copy of tests/fixtures/broken_repo, so the
+# committed fixture is never mutated and the recording is re-runnable.
+# Commands avoid `ls`/`dir` and quoting so the tape plays the same under
+# vhs's default shell on Windows (cmd.exe) and on the Linux CI recorder.
 
-Set TypingSpeed 40ms
-Set FontSize 16
-Set Width 1000
-Set Height 640
-Set Theme "Dracula"
-Set Padding 20
-Set Framerate 12
+Set FontFamily "JetBrains Mono"
+Set FontSize 18
+Set LineHeight 1.4
+Set LetterSpacing 0
+Set Width 1200
+Set Height 700
+Set Padding 40
+Set Margin 20
+Set MarginFill "#0F172A"
+Set BorderRadius 12
+Set Theme "Catppuccin Mocha"
+Set WindowBar "Colorful"
+Set WindowBarSize 40
+Set TypingSpeed 45ms
+Set Framerate 30
+Set PlaybackSpeed 1.1
 
 Output demo/demo.gif
 
-Type "echo ForgeFix - one command to fix any repo"
+# 1) Title card
+Type "echo ForgeFix - one command to fix any repo's setup"
 Enter
-Sleep 1s
-Type "echo ------------------------------------------------------------------"
-Enter
-Sleep 500ms
+Sleep 2s
 
-Type "forgefix --help"
-Enter
-Sleep 3s
-
+# 2) A deliberately broken repo: app.py + pyproject.toml, nothing else
+#    (scratch copy, so the committed fixture stays pristine)
 Type "python demo/prep_scratch.py"
 Enter
-Sleep 1s
+Sleep 3s
 Type "cd demo-scratch"
 Enter
-Sleep 500ms
+Sleep 1s
 
-# Before: the broken fixture scores 42/100
+# 3) The health check: 42/100, every gap with a concrete fix
 Type "forgefix doctor"
-Enter
-Sleep 5s
-
-# The report captures the same score
-Type "forgefix report"
 Enter
 Sleep 3s
 
-# One command repairs the setup, creates .venv, installs deps, runs tests
+# 4) The same findings as markdown, highest-value fixes first
+Type "forgefix report"
+Enter
+Sleep 2s
+
+# 5) The bring-up: missing setup files, .venv, install, lockfile, tests
+#    (outcomes print when the plan finishes, so this waits out the full run)
 Type "forgefix up --apply"
 Enter
 Sleep 45s
 
-# After: the same repo now scores 91/100
+# 6) The same repo, now healthy: 91/100
 Type "forgefix doctor"
 Enter
-Sleep 5s
+Sleep 3s
+
+# 7) Final card
+Type "echo github.com/BistaDinesh03/forgefix - pipx install forgefix"
+Enter
+Sleep 2s

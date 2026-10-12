@@ -24,3 +24,6 @@ demo-scratch/
 .env
 .env.*
 !.env.example
+
+# Local backups (files replaced during repo work are copied here first)
+backups/

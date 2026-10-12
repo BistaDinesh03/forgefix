@@ -1,0 +1,53 @@
+name: Bug report
+description: Something in ForgeFix broke or produced a wrong result.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. For security issues, use the private channel
+        described in [SECURITY.md](https://github.com/BistaDinesh03/forgefix/blob/main/SECURITY.md).
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `pip show forgefix`, or the release tag you used.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: The command you ran and what it printed.
+      placeholder: "`forgefix doctor` scored 100 on a repo with no README."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Minimal steps to reproduce. A public repo URL or a fixture under tests/fixtures/ is ideal.
+      placeholder: "Clone X, run `forgefix doctor --path X`."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected instead.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: This is not a security vulnerability (those go through SECURITY.md).
+          required: true
