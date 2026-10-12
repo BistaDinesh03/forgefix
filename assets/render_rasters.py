@@ -1,176 +1,191 @@
-"""Render logo.png and social-preview.png from the hand-drawn SVG geometry.
+"""Render ForgeFix raster assets from the hand-drawn SVG geometry.
 
-The coordinates below mirror assets/logo.svg and assets/banner.svg point for
-point. When the SVGs move, move these too, then re-run:
+The SVGs in this directory are the source of truth. This script mirrors their
+coordinates (24-unit grid, hexagon R=10.5, corner radius 2, cut stroke 4) and
+renders:
 
-    python assets/render_rasters.py
+- assets/logo.png            512x512, transparent, accent blue
+- assets/social-preview.png  1280x640, opaque slate-900
+
+Everything is drawn at 4x and downsampled (LANCZOS) for clean edges.
+No AI image generation, no tracing, no third-party artwork.
+
+Usage:  python assets/render_rasters.py
 """
 
 from __future__ import annotations
 
-import os
+import math
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 HERE = Path(__file__).resolve().parent
-SS = 4  # supersample factor; downscaled with LANCZOS for clean edges
+SS = 4  # supersample factor
 
-# 24-unit viewbox geometry (mirrors logo.svg)
-HEXAGON = [(12.0, 2.0), (20.66, 7.0), (20.66, 17.0), (12.0, 22.0), (3.34, 17.0), (3.34, 7.0)]
-F_STEM = [(10.0, 17.0), (10.0, 7.0), (15.0, 7.0)]
-F_BAR = [(10.0, 12.0), (13.5, 12.0)]
-CHECK_VB = [(21.6, 19.0), (23.0, 20.6), (26.2, 16.6)]  # just outside the hexagon's lower-right edge
+# --- shared 24-unit geometry (must match logo.svg) -------------------------
 
-# Palette (see assets/brand.md)
+HEX_R = 10.5
+HEX_C = (12.0, 12.0)
+HEX_CORNER_R = 2.0
+# ForgeFix cut: stem + top bar + checkmark crossbar, stroke width 4
+CUT_POLYLINES = [
+    [(9.4, 16.4), (9.4, 8.0), (12.6, 8.0)],
+    [(10.8, 14.2), (12.6, 16.8), (17.2, 11.6)],
+]
+CUT_WIDTH = 4.0
+
 ACCENT = (37, 99, 235)  # #2563EB
 SLATE_900 = (15, 23, 42)  # #0F172A
-SLATE_800 = (30, 41, 59)  # #1E293B
-SLATE_200 = (226, 232, 240)  # #E2E8F0
+SLATE_100 = (248, 250, 252)  # #F8FAFC
 SLATE_400 = (148, 163, 184)  # #94A3B8
-SLATE_500 = (100, 116, 139)  # #64748B
-WHITE = (248, 250, 252)  # #F8FAFC
 
-HOME = Path(os.environ.get("USERPROFILE") or os.environ.get("HOME") or ".")
+# --- social preview layout (must match social-preview.svg) -----------------
 
-
-def _scaled(
-    points: list[tuple[float, float]], scale: float, ox: float, oy: float
-) -> list[tuple[float, float]]:
-    return [(ox + x * scale, oy + y * scale) for x, y in points]
+SP_MARK_BOX = (580.0, 96.0, 120.0)  # x, y, size (24-unit mark scaled to 120)
+SP_WORDMARK = ("ForgeFix", 72, 700, 304.0, -1.5)
+SP_TAGLINE = ("One command to fix any repo's setup.", 26, 400, 352.0, 0.0)
+SP_URL = ("github.com/BistaDinesh03/forgefix", 18, 500, 568.0, 0.0)
 
 
-def _draw_mark(
+def hexagon_points() -> list[tuple[float, float]]:
+    """Rounded pointy-top hexagon outline for the 24-unit grid."""
+    verts = []
+    for angle_deg in (90, 30, -30, -90, -150, 150):
+        a = math.radians(angle_deg)
+        verts.append((HEX_C[0] + HEX_R * math.cos(a), HEX_C[1] - HEX_R * math.sin(a)))
+    inset = HEX_CORNER_R / math.tan(math.radians(60))
+    center_dist = HEX_CORNER_R / math.sin(math.radians(60))
+    pts: list[tuple[float, float]] = []
+    n = len(verts)
+    for i, v in enumerate(verts):
+        prev_v, next_v = verts[(i - 1) % n], verts[(i + 1) % n]
+        d_prev = _unit((v[0] - prev_v[0], v[1] - prev_v[1]))
+        d_next = _unit((next_v[0] - v[0], next_v[1] - v[1]))
+        p_in = (v[0] - d_prev[0] * inset, v[1] - d_prev[1] * inset)
+        p_out = (v[0] + d_next[0] * inset, v[1] + d_next[1] * inset)
+        bis = _unit((HEX_C[0] - v[0], HEX_C[1] - v[1]))
+        center = (v[0] + bis[0] * center_dist, v[1] + bis[1] * center_dist)
+        a_in = math.atan2(p_in[1] - center[1], p_in[0] - center[0])
+        a_out = math.atan2(p_out[1] - center[1], p_out[0] - center[0])
+        sweep = a_out - a_in
+        while sweep <= 0:
+            sweep += 2 * math.pi
+        steps = 16
+        for s in range(steps + 1):
+            a = a_in + sweep * s / steps
+            pts.append(
+                (center[0] + HEX_CORNER_R * math.cos(a), center[1] + HEX_CORNER_R * math.sin(a))
+            )
+    return pts
+
+
+def _unit(vec: tuple[float, float]) -> tuple[float, float]:
+    mag = math.hypot(*vec)
+    return (vec[0] / mag, vec[1] / mag)
+
+
+def draw_mark_mask(size_px: int) -> Image.Image:
+    """L-mode mask: 255 inside the hexagon, 0 in the cut-out interior."""
+    scale = size_px * SS / 24.0
+    img = Image.new("L", (size_px * SS, size_px * SS), 0)
+    draw = ImageDraw.Draw(img)
+    hex_pts = [(x * scale, y * scale) for x, y in hexagon_points()]
+    draw.polygon(hex_pts, fill=255)
+    cut_w = max(1, round(CUT_WIDTH * scale))
+    for line in CUT_POLYLINES:
+        pts = [(x * scale, y * scale) for x, y in line]
+        draw.line(pts, fill=0, width=cut_w, joint="curve")
+        r = cut_w / 2
+        for x, y in pts:
+            draw.ellipse((x - r, y - r, x + r, y + r), fill=0)
+    return img
+
+
+def render_logo() -> Path:
+    mask = draw_mark_mask(512)
+    color = Image.new("RGBA", mask.size, ACCENT + (255,))
+    color.putalpha(mask)
+    out = color.resize((512, 512), Image.LANCZOS)
+    path = HERE / "logo.png"
+    out.save(path, optimize=True)
+    return path
+
+
+def _font(size: int, weight: int) -> ImageFont.FreeTypeFont:
+    name = "segoeuib.ttf" if weight >= 600 else "segoeui.ttf"
+    return ImageFont.truetype(str(Path("C:/Windows/Fonts") / name), size * SS)
+
+
+def _draw_text(
     draw: ImageDraw.ImageDraw,
-    *,
-    scale: float,
-    ox: float,
-    oy: float,
-    color: tuple[int, int, int],
-    stroke: float,
+    text: str,
+    center_x: float,
+    baseline_y: float,
+    size: int,
+    weight: int,
+    tracking: float,
+    fill: tuple[int, int, int],
 ) -> None:
-    """Draw the hexagon + F mark; stroke is in 24-viewbox units."""
-    width = max(1, int(round(stroke * scale)))
-    hexagon = _scaled(HEXAGON, scale, ox, oy)
-    # Per-edge segments (centered strokes, like SVG) plus vertex dots for the
-    # round line-joins. A closed polyline would leave a seam at the start
-    # vertex, and a polygon outline would draw inside the path.
-    for index in range(len(hexagon)):
-        start, end = hexagon[index], hexagon[(index + 1) % len(hexagon)]
-        draw.line([start, end], fill=color, width=width)
-    radius = width / 2
-    for x, y in hexagon:
-        draw.ellipse((x - radius, y - radius, x + radius, y + radius), fill=color)
-    stem = _scaled(F_STEM, scale, ox, oy)
-    bar = _scaled(F_BAR, scale, ox, oy)
-    draw.line(stem, fill=color, width=width, joint="curve")
-    draw.line(bar, fill=color, width=width, joint="curve")
-    # Round caps on the open ends (SVG uses stroke-linecap="round").
-    for point in (stem[0], stem[-1], bar[0], bar[-1]):
-        x, y = point
-        radius = width / 2
-        draw.ellipse((x - radius, y - radius, x + radius, y + radius), fill=color)
-
-
-def _font(candidates: list[Path], size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    for path in candidates:
-        if path.is_file():
-            return ImageFont.truetype(str(path), size)
-    return ImageFont.load_default()
-
-
-def _bold(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    return _font(
-        [
-            Path("C:/Windows/Fonts/segoeuib.ttf"),
-            Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
-            Path("/System/Library/Fonts/Supplemental/Arial Bold.ttf"),
-            HOME / "AppData/Local/Microsoft/Windows/Fonts/JetBrainsMono-Bold.ttf",
-        ],
-        size,
-    )
-
-
-def _sans(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    return _font(
-        [
-            Path("C:/Windows/Fonts/segoeui.ttf"),
-            Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
-            Path("/System/Library/Fonts/Supplemental/Arial.ttf"),
-            HOME / "AppData/Local/Microsoft/Windows/Fonts/JetBrainsMono-Regular.ttf",
-        ],
-        size,
-    )
-
-
-def _mono(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    return _font(
-        [
-            HOME / "AppData/Local/Microsoft/Windows/Fonts/JetBrainsMono-Regular.ttf",
-            Path("C:/Windows/Fonts/consola.ttf"),
-            Path("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"),
-        ],
-        size,
-    )
-
-
-def render_logo_png() -> Path:
-    """512x512 accent-blue mark on transparent background."""
-    size = 512 * SS
-    image = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(image)
-    mark_px = 410  # mark height in final pixels
-    scale = (mark_px / 24) * SS
-    offset = (size - mark_px * SS) / 2
-    _draw_mark(draw, scale=scale, ox=offset, oy=offset, color=ACCENT, stroke=2.0)
-    out = HERE / "logo.png"
-    image.resize((512, 512), Image.LANCZOS).save(out)
-    return out
+    font = _font(size, weight)
+    x = center_x * SS
+    if tracking:
+        total = sum(font.getlength(ch) + tracking * SS for ch in text) - tracking * SS
+        x -= total / 2
+        for ch in text:
+            draw.text((x, baseline_y * SS), ch, font=font, fill=fill, anchor="ls")
+            x += font.getlength(ch) + tracking * SS
+    else:
+        draw.text((x, baseline_y * SS), text, font=font, fill=fill, anchor="ms")
 
 
 def render_social_preview() -> Path:
-    """1280x640 card: mark + wordmark + tagline + repo URL."""
-    width, height = 1280 * SS, 640 * SS
-    image = Image.new("RGBA", (width, height), SLATE_900 + (255,))
-    # One subtle glow behind the mark (slate-800, heavily blurred).
-    glow = Image.new("RGBA", (width, height), (0, 0, 0, 0))
-    gd = ImageDraw.Draw(glow)
-    gd.ellipse((-200 * SS, 60 * SS, 760 * SS, 640 * SS), fill=SLATE_800 + (150,))
-    image.alpha_composite(glow.filter(ImageFilter.GaussianBlur(90 * SS)))
+    width, height = 1280, 640
+    img = Image.new("RGB", (width * SS, height * SS), SLATE_900)
+    draw = ImageDraw.Draw(img)
 
-    draw = ImageDraw.Draw(image)
-    scale = 12.0 * SS
-    _draw_mark(draw, scale=scale, ox=196 * SS, oy=176 * SS, color=SLATE_200, stroke=2.0)
-    # Checkmark accent just outside the hexagon's lower-right edge (viewbox units).
-    check = _scaled(CHECK_VB, scale, 196 * SS, 176 * SS)
-    draw.line(check, fill=(22, 163, 74), width=17 * SS, joint="curve")
-    for x, y in (check[0], check[-1]):
-        radius = 8.5 * SS
-        draw.ellipse((x - radius, y - radius, x + radius, y + radius), fill=(22, 163, 74))
+    # Mark (hexagon with cut interior), white, 120x120 centered
+    mx, my, msize = SP_MARK_BOX
+    mask = draw_mark_mask(int(msize))
+    mark = Image.new("RGBA", mask.size, SLATE_100 + (255,))
+    mark.putalpha(mask)
+    mark = mark.resize((int(msize * SS), int(msize * SS)), Image.LANCZOS)
+    img.paste(mark, (round(mx * SS), round(my * SS)), mark)
 
-    draw.text((522 * SS, 296 * SS), "ForgeFix", font=_bold(76 * SS), fill=WHITE, anchor="ls")
-    draw.text(
-        (524 * SS, 358 * SS),
-        "One command to fix any repo's setup.",
-        font=_sans(32 * SS),
-        fill=SLATE_400,
-        anchor="ls",
-    )
-    draw.text(
-        (524 * SS, 418 * SS),
-        "github.com/BistaDinesh03/forgefix",
-        font=_mono(26 * SS),
-        fill=SLATE_500,
-        anchor="ls",
-    )
-    out = HERE / "social-preview.png"
-    image.convert("RGB").resize((1280, 640), Image.LANCZOS).save(out)
-    return out
+    _draw_text(draw, *(_take(SP_WORDMARK)), fill=SLATE_100)
+    _draw_text(draw, *(_take(SP_TAGLINE)), fill=SLATE_400)
+    _draw_text(draw, *(_take(SP_URL)), fill=SLATE_400)
+
+    out = img.resize((width, height), Image.LANCZOS)
+    path = HERE / "social-preview.png"
+    out.save(path, optimize=True)
+    return path
+
+
+def _take(spec: tuple) -> tuple:
+    text, size, weight, baseline, tracking = spec
+    return (text, 640.0, baseline, size, weight, tracking)
+
+
+def _check(path: Path, size: tuple[int, int], opaque: bool) -> None:
+    with Image.open(path) as im:
+        if im.size != size:
+            raise SystemExit(f"{path.name}: {im.size} != {size}")
+        want = "RGB" if opaque else "RGBA"
+        if im.mode != want:
+            raise SystemExit(f"{path.name}: mode {im.mode} != {want}")
+        mode = im.mode
+    kb = path.stat().st_size / 1024
+    if kb >= 200:
+        raise SystemExit(f"{path.name}: {kb:.0f} KB >= 200 KB")
+    print(f"  {path.name}: {size[0]}x{size[1]} {mode} {kb:.1f} KB")
 
 
 def main() -> None:
-    for path in (render_logo_png(), render_social_preview()):
-        print(f"wrote {path.name} ({path.stat().st_size} bytes)")
+    logo = render_logo()
+    social = render_social_preview()
+    _check(logo, (512, 512), opaque=False)
+    _check(social, (1280, 640), opaque=True)
 
 
 if __name__ == "__main__":
