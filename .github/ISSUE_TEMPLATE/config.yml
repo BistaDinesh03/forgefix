@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and discussion
+    url: https://github.com/BistaDinesh03/forgefix/discussions
+    about: Ask usage questions or propose ideas in Discussions.
+  - name: Security vulnerability
+    url: https://github.com/BistaDinesh03/forgefix/blob/main/SECURITY.md
+    about: Report vulnerabilities privately (never in a public issue).
