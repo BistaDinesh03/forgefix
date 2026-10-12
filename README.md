@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="ForgeFix — one command to fix any repo's setup" width="100%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
+    <img src="assets/banner.svg" alt="ForgeFix - one command to fix any repo's setup" width="100%">
+  </picture>
 </p>
 
 <p align="center">
@@ -136,6 +139,27 @@ A real report from the broken fixture, abridged:
 The check table above it lists all 11 findings (for example: `FAIL | CI workflow |
 automation | no CI workflow found`).
 
+## What it checks
+
+Ten built-in rules. A scan reads file names and text only - nothing is
+executed, downloaded, or copied:
+
+| Rule | What it looks for |
+| --- | --- |
+| `readme` | A README (`.md`, `.markdown`, `.rst`, `.txt`) at the repository root |
+| `install` | An install line in the README (`pip install`, `npm install`, `make setup`, ...) |
+| `demo` | A `.gif` in the root, `demo/`, `docs/`, `assets/`, `images/`, or `.github/` |
+| `lockfile` | A committed lockfile (`requirements.lock`, `poetry.lock`, `uv.lock`, `package-lock.json`, `yarn.lock`, `go.sum`, `Cargo.lock`) |
+| `pinned_deps` | `==` pins in `requirements.txt`, or a committed lockfile |
+| `devcontainer` | A `Dockerfile`, `Containerfile`, `docker-compose.*`, or `.devcontainer/` |
+| `ci` | `.github/workflows/`, `.gitlab-ci.yml`, `.circleci/`, `Jenkinsfile`, `.travis.yml` |
+| `security` | A `SECURITY.md` (or `.github/SECURITY.md`) |
+| `license` | A `LICENSE`, `LICENCE`, or `COPYING` file (plain, `.md`, or `.txt`) |
+| `dev_env` | A `.venv` in a Python project (skipped outside Python projects) |
+
+Each rule maps 1:1 to the weight table above. Disable rules per repository
+with `.forgefix.yml` (`forgefix init`).
+
 ## Quickstart
 
 ```bash
@@ -154,6 +178,24 @@ forgefix up --apply
 
 Try the bundled fixtures right now: `forgefix doctor --path tests/fixtures/broken_repo`
 scores 42, `--path tests/fixtures/minimal_repo` scores 100.
+
+## What it is NOT
+
+Compared by category, not by name:
+
+| Category | What it covers | What ForgeFix adds |
+| --- | --- | --- |
+| Static linters | Style and correctness inside files | Repository-level onboarding health: docs, CI, license, lockfile |
+| Dependency scanners | Vulnerable and outdated dependencies | A score and repairs; it does not audit package contents |
+| Setup wizards | Bootstrapping brand-new projects | Works on the repositories you already cloned |
+| CI gate tools | Enforcing checks in pipelines | The check itself, runnable locally and over HTTP |
+
+What ForgeFix is not:
+
+- Not a security scanner. It checks whether a security *policy* exists, not for vulnerabilities.
+- Not a package manager. It never resolves, pins, or vendors dependencies for you.
+- Not a linter replacement. Keep ruff, eslint, and their friends; they work inside files.
+- Not a bot. It never opens pull requests and never pushes to your repository.
 
 ## Plugins
 
@@ -219,23 +261,21 @@ $ curl "http://127.0.0.1:8000/report?path=."
 
 The API is the same scanner as the CLI: same weights, same score, same findings.
 
-## How it compares
+## Use it as a CI gate
 
-By category, not by name:
+`forgefix doctor` exits with code 2 when the score is below `--min-score`, so
+one pipeline step can fail a pull request that drops the health score:
 
-| Category | What it covers | What ForgeFix adds |
-| --- | --- | --- |
-| Static linters | Style and correctness inside files | Repository-level onboarding health: docs, CI, license, lockfile |
-| Dependency scanners | Vulnerable and outdated dependencies | A score and repairs; it does not audit package contents |
-| Setup wizards | Bootstrapping brand-new projects | Works on the repositories you already cloned |
-| CI gate tools | Enforcing checks in pipelines | The check itself, runnable locally and over HTTP |
+```yaml
+- name: ForgeFix health gate
+  run: |
+    pipx install "git+https://github.com/BistaDinesh03/forgefix"
+    forgefix doctor --path . --min-score 80 --json
+```
 
-What ForgeFix is not:
-
-- Not a security scanner. It checks whether a security *policy* exists, not for vulnerabilities.
-- Not a package manager. It never resolves, pins, or vendors dependencies for you.
-- Not a linter replacement. Keep ruff, eslint, and their friends; they work inside files.
-- Not a bot. It never opens pull requests and never pushes to your repository.
+Run `forgefix init` first to store the threshold in `.forgefix.yml`
+(`min_score`); the file's value applies whenever the flag is absent. `--json`
+prints the score and every finding for downstream steps.
 
 ## Roadmap
 
