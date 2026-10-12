@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "ForgeFix"
 type: software
-version: 0.1.0
-date-released: 2026-10-11
+version: 0.1.1
+date-released: 2026-10-12
 license: MIT
 repository-code: "https://github.com/BistaDinesh03/forgefix"
 authors:
