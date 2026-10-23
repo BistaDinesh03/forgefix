@@ -427,34 +427,42 @@ def execute_plan(
     *,
     runner: Runner | None = None,
     launcher: Launcher | None = None,
+    on_outcome: Callable[[Outcome], None] | None = None,
 ) -> list[Outcome]:
-    """Apply a plan. Repairs never overwrite; run steps fail fast."""
+    """Apply a plan. Repairs never overwrite; run steps fail fast.
+
+    When ``on_outcome`` is given it is invoked *as each step finishes*, so a
+    caller can print progress live instead of waiting for the whole plan.
+    """
     run = runner or default_runner
     launch = launcher or default_launcher
     outcomes: list[Outcome] = []
 
+    def record(outcome: Outcome) -> None:
+        outcomes.append(outcome)
+        if on_outcome is not None:
+            on_outcome(outcome)
+
     for step in steps:
         if step.kind == "repair":
             if step.target is None:
-                outcomes.append(Outcome(step.label, "failed", "repair has no target"))
+                record(Outcome(step.label, "failed", "repair has no target"))
                 break
             if step.target.exists():
-                outcomes.append(
-                    Outcome(step.label, "skipped", f"{step.target.name} already exists")
-                )
+                record(Outcome(step.label, "skipped", f"{step.target.name} already exists"))
                 continue
             step.target.parent.mkdir(parents=True, exist_ok=True)
             step.target.write_text(step.content, encoding="utf-8", newline="\n")
-            outcomes.append(Outcome(step.label, "done", f"created {step.target.name}"))
+            record(Outcome(step.label, "done", f"created {step.target.name}"))
             continue
 
         if not step.argv:
-            outcomes.append(Outcome(step.label, "skipped", "nothing to do"))
+            record(Outcome(step.label, "skipped", "nothing to do"))
             continue
 
         executable = _resolve_exe(step.argv[0])
         if executable is None:
-            outcomes.append(Outcome(step.label, "skipped", f"{step.argv[0]} not found on PATH"))
+            record(Outcome(step.label, "skipped", f"{step.argv[0]} not found on PATH"))
             continue
         argv = (executable, *step.argv[1:])
 
@@ -462,21 +470,21 @@ def execute_plan(
             try:
                 pid = launch(argv, root)
             except OSError as exc:
-                outcomes.append(Outcome(step.label, "failed", str(exc)))
+                record(Outcome(step.label, "failed", str(exc)))
                 break
-            outcomes.append(Outcome(step.label, "done", f"started with pid {pid}"))
+            record(Outcome(step.label, "done", f"started with pid {pid}"))
             continue
 
         code, output = run(argv, root)
         if code != 0:
-            outcomes.append(Outcome(step.label, "failed", _tail(output) or f"exit code {code}"))
+            record(Outcome(step.label, "failed", _tail(output) or f"exit code {code}"))
             break
 
         if step.kind == "freeze" and step.target is not None:
             step.target.write_text(output.rstrip() + "\n", encoding="utf-8", newline="\n")
-            outcomes.append(Outcome(step.label, "done", f"wrote {step.target.name}"))
+            record(Outcome(step.label, "done", f"wrote {step.target.name}"))
         else:
-            outcomes.append(Outcome(step.label, "done", _tail(output)))
+            record(Outcome(step.label, "done", _tail(output)))
     return outcomes
 
 

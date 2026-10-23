@@ -15,6 +15,9 @@ class ForgeFixConfig(BaseModel):
 
     report_path: str = "reports/forgefix-report.md"
     disabled_rules: list[str] = Field(default_factory=list)
+    # Rule ids to skip entirely, e.g. `ignore: [lockfile, pinned_deps]`.
+    # Both keys work; `ignore` is the friendlier spelling in docs.
+    ignore: list[str] = Field(default_factory=list)
     min_score: int = 80
 
 

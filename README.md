@@ -158,10 +158,11 @@ executed, downloaded, or copied:
 | `ci` | `.github/workflows/`, `.gitlab-ci.yml`, `.circleci/`, `Jenkinsfile`, `.travis.yml` |
 | `security` | A `SECURITY.md` (or `.github/SECURITY.md`) |
 | `license` | A `LICENSE`, `LICENCE`, or `COPYING` file (plain, `.md`, or `.txt`) |
-| `dev_env` | A `.venv` in a Python project (skipped outside Python projects) |
+| `dev_env` | A `.venv` in a Python project (`WARN` until created, skipped outside Python projects) |
 
 Each rule maps 1:1 to the weight table above. Disable rules per repository
-with `.forgefix.yml` (`forgefix init`).
+with `.forgefix.yml` (`forgefix init`): `disabled_rules: [demo]` or
+`ignore: [lockfile, pinned_deps]` both skip the listed rule ids.
 
 ## Quickstart
 
@@ -253,7 +254,7 @@ forgefix serve                       # http://127.0.0.1:8000
 
 ```console
 $ curl http://127.0.0.1:8000/health
-{"status":"ok","version":"0.1.2"}
+{"status":"ok","version":"0.2.0"}
 
 $ curl "http://127.0.0.1:8000/doctor?path=."
 {"path": "...", "score": {"total": 42, ...}, "findings": [...], "plugins": [...]}
