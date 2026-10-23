@@ -11,6 +11,7 @@ Status = Literal["pass", "warn", "fail", "skip"]
 README_NAMES = ("README.md", "README.markdown", "README.rst", "README.txt", "README")
 LICENSE_NAMES = ("LICENSE", "LICENSE.md", "LICENSE.txt", "LICENCE", "COPYING", "COPYING.md")
 SECURITY_NAMES = ("SECURITY.md", "SECURITY.txt", ".github/SECURITY.md")
+CHANGELOG_NAMES = ("CHANGELOG.md", "CHANGELOG.markdown", "CHANGELOG.rst", "CHANGELOG.txt", "CHANGELOG", "CHANGES.md", "CHANGES", "HISTORY.md", "HISTORY")
 LOCKFILE_NAMES = (
     "requirements.lock",
     "poetry.lock",
@@ -118,6 +119,14 @@ RULES: tuple[Rule, ...] = (
         3,
         2,
         "Record a short demo GIF (see CONTRIBUTING.md) and link it at the top of the README.",
+    ),
+    Rule(
+        "changelog",
+        "docs",
+        "Changelog present",
+        3,
+        2,
+        "Add a CHANGELOG.md (Keep a Changelog style is fine) so users see what changed between releases.",
     ),
     Rule(
         "lockfile",
