@@ -13,7 +13,9 @@ from pathlib import Path
 from forgefix.core.rules import (
     CHANGELOG_NAMES,
     CI_FILES,
+    CITATION_NAMES,
     DOCKER_FILES,
+    FUNDING_NAMES,
     GIF_SEARCH_DIRS,
     INSTALL_MARKERS,
     LICENSE_NAMES,
@@ -82,6 +84,20 @@ def _detect_changelog(root: Path) -> tuple[Status, str]:
     if found is not None:
         return "pass", f"{found.name} found"
     return "warn", "no changelog at the repository root"
+
+
+def _detect_citation(root: Path) -> tuple[Status, str]:
+    found = _find_named(root, CITATION_NAMES)
+    if found is not None:
+        return "pass", f"{found.name} found"
+    return "warn", "no CITATION.cff at the repository root"
+
+
+def _detect_funding(root: Path) -> tuple[Status, str]:
+    for name in FUNDING_NAMES:
+        if (root / name).exists():
+            return "pass", f"{name} found"
+    return "warn", "no .github/FUNDING.yml"
 
 
 def _detect_lockfile(root: Path) -> tuple[Status, str]:
@@ -166,6 +182,8 @@ DETECTORS: dict[str, Detector] = {
     "install": _detect_install,
     "demo": _detect_demo,
     "changelog": _detect_changelog,
+    "citation": _detect_citation,
+    "funding": _detect_funding,
     "lockfile": _detect_lockfile,
     "pinned_deps": _detect_pinned,
     "devcontainer": _detect_devcontainer,

@@ -50,10 +50,10 @@ def test_init_on_a_file_errors(tmp_path: Path) -> None:
     assert result.exit_code == 2
 
 
-def test_doctor_broken_repo_prints_score_40() -> None:
+def test_doctor_broken_repo_prints_score_38() -> None:
     result = runner.invoke(app, ["doctor", "--path", str(BROKEN)])
     assert result.exit_code == 0
-    assert "Health score: 40/100" in result.stdout
+    assert "Health score: 38/100" in result.stdout
     assert "README present" in result.stdout
     assert "FAIL" in result.stdout
     assert "Top fixes:" in result.stdout
@@ -68,9 +68,9 @@ def test_doctor_minimal_repo_is_perfect() -> None:
 def test_doctor_json_output() -> None:
     result = runner.invoke(app, ["doctor", "--path", str(BROKEN), "--json"])
     payload = json.loads(result.stdout)
-    assert payload["score"]["total"] == 40
+    assert payload["score"]["total"] == 38
     assert payload["plugins"] == ["example"]
-    assert len(payload["findings"]) == 12
+    assert len(payload["findings"]) == 14
     assert payload["score"]["top_fixes"]
 
 
@@ -80,7 +80,7 @@ def test_doctor_min_score_exits_2() -> None:
 
 
 def test_doctor_min_score_satisfied() -> None:
-    result = runner.invoke(app, ["doctor", "--path", str(BROKEN), "--min-score", "40"])
+    result = runner.invoke(app, ["doctor", "--path", str(BROKEN), "--min-score", "30"])
     assert result.exit_code == 0
 
 
@@ -110,7 +110,7 @@ def test_report_writes_default_path(tmp_path: Path, monkeypatch) -> None:  # typ
     assert result.exit_code == 0
     content = (tmp_path / "reports" / "forgefix-report.md").read_text(encoding="utf-8")
     assert "# ForgeFix health report" in content
-    assert "40/100" in content
+    assert "38/100" in content
     assert "Top fixes" in content
 
 

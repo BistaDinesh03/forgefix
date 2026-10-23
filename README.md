@@ -40,7 +40,7 @@
 What you are watching:
 
 1. `forgefix doctor` on a deliberately broken repo — an `app.py` and a `pyproject.toml`,
-   but no README, no lockfile, no CI, no security policy. Score: **42/100**.
+   but no README, no lockfile, no CI, no security policy. Score: **38/100**.
 2. `forgefix report` — the same findings as markdown, with the highest-value fixes first.
 3. `forgefix up --apply` — creates the missing setup files, makes `.venv`, installs the
    project, writes `requirements.lock`, and runs the test suite.
@@ -101,6 +101,8 @@ scores the same, and unit tests pin the exact numbers.
 | One-command install line | docs | 8 | 4 |
 | Demo GIF or screenshot | docs | 3 | 2 |
 | Changelog present | docs | 3 | 2 |
+| Citation file | docs | 2 | 1 |
+| Funding configuration | community | 2 | 1 |
 | Dependency lockfile | deps | 6 | 3 |
 | Pinned dependency versions | deps | 5 | 2 |
 | Dockerfile or devcontainer | automation | 4 | 1 |
@@ -118,8 +120,8 @@ A real report from the broken fixture, abridged:
 # ForgeFix health report
 
 - Repository: `demo-scratch`
-- Health score: **42/100** (critical)
-- Checks: 0 pass, 5 warn, 6 fail, 0 skip
+- Health score: **38/100** (critical)
+- Checks: 0 pass, 8 warn, 6 fail, 0 skip
 
 ## Category breakdown
 
@@ -145,7 +147,7 @@ automation | no CI workflow found`).
 
 ## What it checks
 
-Eleven built-in rules. A scan reads file names and text only - nothing is
+Thirteen built-in rules. A scan reads file names and text only - nothing is
 executed, downloaded, or copied:
 
 | Rule | What it looks for |
@@ -154,6 +156,8 @@ executed, downloaded, or copied:
 | `install` | An install line in the README (`pip install`, `npm install`, `make setup`, ...) |
 | `demo` | A `.gif` in the root, `demo/`, `docs/`, `assets/`, `images/`, or `.github/` |
 | `changelog` | A changelog (`CHANGELOG.md`, `CHANGELOG`, `HISTORY.md`, `CHANGES`, ...) at the repository root |
+| `citation` | A `CITATION.cff` (or `CITATION.bib`) at the repository root |
+| `funding` | A `.github/FUNDING.yml` (or `FUNDING.yml`) |
 | `lockfile` | A committed lockfile (`requirements.lock`, `poetry.lock`, `uv.lock`, `package-lock.json`, `yarn.lock`, `go.sum`, `Cargo.lock`) |
 | `pinned_deps` | `==` pins in `requirements.txt`, or a committed lockfile |
 | `devcontainer` | A `Dockerfile`, `Containerfile`, `docker-compose.*`, or `.devcontainer/` |
