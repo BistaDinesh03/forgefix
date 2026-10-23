@@ -60,7 +60,7 @@ def _resolve_root(path: Path) -> Path:
 
 def _scan(root: Path) -> ScanResult:
     config = load_config(root)
-    return scan(root, disabled=config.disabled_rules)
+    return scan(root, disabled=[*config.disabled_rules, *config.ignore])
 
 
 def _print_doctor_table(result: ScanResult) -> None:
@@ -160,7 +160,7 @@ def report(
     """Write the markdown health report (score, breakdown, top fixes)."""
     root = _resolve_root(path)
     config = load_config(root)
-    result = scan(root, disabled=config.disabled_rules)
+    result = scan(root, disabled=[*config.disabled_rules, *config.ignore])
     markdown = render_markdown(result)
     target = output if output is not None else Path(config.report_path)
     written = write_report(target, markdown)
@@ -190,24 +190,27 @@ def up(
         typer.echo(f"[dry-run] {len(steps)} step(s) planned - re-run with --apply to execute")
         return
 
-    outcomes = execute_plan(root, steps)
-    _print_outcomes(outcomes)
+    outcomes = execute_plan(root, steps, on_outcome=_print_outcome)
     if not plan_is_clean(outcomes):
         typer.echo("[forgefix] bring-up failed - see the failing step above", err=True)
         raise typer.Exit(code=1)
     typer.echo("[forgefix] bring-up complete")
 
 
-def _print_outcomes(outcomes: list[Outcome]) -> None:
+def _print_outcome(outcome: Outcome) -> None:
     marker = {"done": "[ok]", "skipped": "[skip]", "failed": "[fail]"}
+    if outcome.status == "failed" and "\n" in outcome.detail:
+        typer.echo(f"{marker[outcome.status]} {outcome.label}")
+        for line in outcome.detail.splitlines():
+            typer.echo(f"    {line}")
+    else:
+        suffix = f" - {outcome.detail}" if outcome.detail else ""
+        typer.echo(f"{marker.get(outcome.status, '[??]')} {outcome.label}{suffix}")
+
+
+def _print_outcomes(outcomes: list[Outcome]) -> None:
     for outcome in outcomes:
-        if outcome.status == "failed" and "\n" in outcome.detail:
-            typer.echo(f"{marker[outcome.status]} {outcome.label}")
-            for line in outcome.detail.splitlines():
-                typer.echo(f"    {line}")
-        else:
-            suffix = f" - {outcome.detail}" if outcome.detail else ""
-            typer.echo(f"{marker.get(outcome.status, '[??]')} {outcome.label}{suffix}")
+        _print_outcome(outcome)
 
 
 @app.command()

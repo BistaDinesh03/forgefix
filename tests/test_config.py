@@ -17,6 +17,12 @@ def test_defaults_when_file_missing(tmp_path: Path) -> None:
     assert config.report_path == "reports/forgefix-report.md"
     assert config.min_score == 80
     assert config.disabled_rules == []
+    assert config.ignore == []
+
+
+def test_ignore_key_loads(tmp_path: Path) -> None:
+    (tmp_path / CONFIG_NAME).write_text("ignore: [lockfile, pinned_deps]\n", encoding="utf-8")
+    assert load_config(tmp_path).ignore == ["lockfile", "pinned_deps"]
 
 
 def test_invalid_yaml_falls_back(tmp_path: Path) -> None:
@@ -35,7 +41,12 @@ def test_wrong_types_fall_back(tmp_path: Path) -> None:
 
 
 def test_save_load_roundtrip(tmp_path: Path) -> None:
-    config = ForgeFixConfig(report_path="custom/report.md", disabled_rules=["demo"], min_score=55)
+    config = ForgeFixConfig(
+        report_path="custom/report.md",
+        disabled_rules=["demo"],
+        ignore=["lockfile", "pinned_deps"],
+        min_score=55,
+    )
     save_config(tmp_path, config)
     loaded = load_config(tmp_path)
     assert loaded == config

@@ -130,6 +130,26 @@ def test_execute_fails_fast_on_nonzero_exit(tmp_path: Path) -> None:
     assert len(runner.calls) == 2  # type: ignore[attr-defined]
 
 
+def test_execute_plan_streams_each_outcome_immediately(tmp_path: Path) -> None:
+    # on_outcome fires as each step finishes, not after the whole plan:
+    # when step 2 starts, step 1's outcome is already streamed.
+    streamed: list[Outcome] = []
+    observed: list[int] = []
+
+    def runner(argv: tuple[str, ...], cwd: Path) -> tuple[int, str]:
+        observed.append(len(streamed))
+        return 0, "ok"
+
+    steps = [
+        Step(kind="repair", label="create README", target=tmp_path / "README.md", content="# x\n"),
+        Step(kind="run", label="second", argv=(sys.executable, "-c", "pass")),
+    ]
+    outcomes = execute_plan(tmp_path, steps, runner=runner, on_outcome=streamed.append)  # type: ignore[arg-type]
+    assert [outcome.status for outcome in outcomes] == ["done", "done"]
+    assert observed == [1]  # only the first outcome had streamed when step 2 ran
+    assert streamed == outcomes
+
+
 def test_execute_freeze_writes_full_output(tmp_path: Path) -> None:
     runner = fake_runner_factory([0], ["pkg-a==1.0\npkg-b==2.0\n"])
     target = tmp_path / "requirements.lock"

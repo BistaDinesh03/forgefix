@@ -150,7 +150,9 @@ def _detect_dev_env(root: Path) -> tuple[Status, str]:
         return "skip", "not a Python project"
     if (root / ".venv").is_dir():
         return "pass", ".venv found"
-    return "fail", "no .venv - run `forgefix up --apply`"
+    # WARN, not FAIL: a fresh clone legitimately has no .venv yet. The check
+    # reports -3 until setup runs, instead of failing a brand-new checkout.
+    return "warn", "no .venv - run `forgefix up --apply`"
 
 
 DETECTORS: dict[str, Detector] = {

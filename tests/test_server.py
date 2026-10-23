@@ -25,7 +25,7 @@ def test_doctor_endpoint_scans_path() -> None:
     response = client.get("/doctor", params={"path": str(BROKEN)})
     assert response.status_code == 200
     body = response.json()
-    assert body["score"]["total"] == 42
+    assert body["score"]["total"] == 46
     assert len(body["findings"]) == 11
     assert body["plugins"] == ["example"]
 

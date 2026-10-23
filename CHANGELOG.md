@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-23
+
+### Added
+
+- `forgefix up --apply` now prints each step the moment it finishes
+  ("create virtual environment (.venv)", "install dependencies", ...) instead
+  of buffering everything until the end - long bring-ups no longer look frozen
+- `.forgefix.yml` `ignore:` key - skip rules by id without disabling them,
+  e.g. `ignore: [lockfile, pinned_deps]` (works alongside `disabled_rules`)
+
+### Changed
+
+- The "Ready dev environment" check reports `WARN` (−3) instead of `FAIL` (−7)
+  when a Python project has no `.venv` yet: a fresh clone is not a broken
+  repository, and setup is one command away
+
 ## [0.1.2] - 2026-10-12
 
 Documentation and release-tooling patch. No CLI or plugin behavior changes.
@@ -86,7 +102,8 @@ Packaging and documentation release. No CLI or plugin behavior changes.
   multi-stage non-root Docker image, devcontainer, Makefile
 - Docs site (mkdocs-material): index, cli, plugins, api, faq, monetization
 
-[Unreleased]: https://github.com/BistaDinesh03/forgefix/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/BistaDinesh03/forgefix/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/BistaDinesh03/forgefix/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/BistaDinesh03/forgefix/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/BistaDinesh03/forgefix/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/BistaDinesh03/forgefix/releases/tag/v0.1.0

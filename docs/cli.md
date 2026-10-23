@@ -70,8 +70,12 @@ Scaffolds `.forgefix.yml` in `--path` (default `.`); never overwrites an existin
 ```yaml
 report_path: reports/forgefix-report.md
 disabled_rules: []
+ignore: []
 min_score: 80
 ```
+
+`ignore` and `disabled_rules` are equivalent lists of rule ids to skip;
+`ignore: [lockfile, pinned_deps]` is the spelling used in the docs.
 
 ## `forgefix cloud`
 

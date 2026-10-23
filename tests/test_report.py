@@ -19,7 +19,7 @@ def test_render_broken_fixture_report() -> None:
     md = render_markdown(scan(BROKEN), now=NOW)
     assert md.startswith("# ForgeFix health report")
     assert "2026-10-11 12:00 UTC" in md
-    assert "Health score: **42/100** (critical)" in md
+    assert "Health score: **46/100** (critical)" in md
     assert "| Status | Check | Category | Detail |" in md
     assert "README present" in md
     assert "## Category breakdown" in md

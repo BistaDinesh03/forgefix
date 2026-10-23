@@ -50,10 +50,10 @@ def test_init_on_a_file_errors(tmp_path: Path) -> None:
     assert result.exit_code == 2
 
 
-def test_doctor_broken_repo_prints_score_42() -> None:
+def test_doctor_broken_repo_prints_score_46() -> None:
     result = runner.invoke(app, ["doctor", "--path", str(BROKEN)])
     assert result.exit_code == 0
-    assert "Health score: 42/100" in result.stdout
+    assert "Health score: 46/100" in result.stdout
     assert "README present" in result.stdout
     assert "FAIL" in result.stdout
     assert "Top fixes:" in result.stdout
@@ -67,8 +67,8 @@ def test_doctor_minimal_repo_is_perfect() -> None:
 
 def test_doctor_json_output() -> None:
     result = runner.invoke(app, ["doctor", "--path", str(BROKEN), "--json"])
-    payload = json.loads(result.stdout)
-    assert payload["score"]["total"] == 42
+    payload = json.loads(result.stdout)  # strict JSON: no Rich markup allowed
+    assert payload["score"]["total"] == 46
     assert payload["plugins"] == ["example"]
     assert len(payload["findings"]) == 11
     assert payload["score"]["top_fixes"]
@@ -104,13 +104,22 @@ def test_doctor_respects_disabled_rules(tmp_path: Path) -> None:
     assert "readme" not in ids
 
 
+def test_doctor_respects_ignore_key(tmp_path: Path) -> None:
+    (tmp_path / ".forgefix.yml").write_text("ignore: [lockfile, pinned_deps]\n", encoding="utf-8")
+    result = runner.invoke(app, ["doctor", "--path", str(tmp_path), "--json"])
+    ids = [finding["rule_id"] for finding in json.loads(result.stdout)["findings"]]
+    assert "lockfile" not in ids
+    assert "pinned_deps" not in ids
+    assert "readme" in ids
+
+
 def test_report_writes_default_path(tmp_path: Path, monkeypatch) -> None:  # type: ignore[no-untyped-def]
     monkeypatch.chdir(tmp_path)
     result = runner.invoke(app, ["report", "--path", str(BROKEN)])
     assert result.exit_code == 0
     content = (tmp_path / "reports" / "forgefix-report.md").read_text(encoding="utf-8")
     assert "# ForgeFix health report" in content
-    assert "42/100" in content
+    assert "46/100" in content
     assert "Top fixes" in content
 
 
@@ -138,13 +147,18 @@ def test_up_apply_reports_outcomes(tmp_path: Path, monkeypatch) -> None:  # type
     repo.mkdir()
     captured: dict[str, object] = {}
 
-    def fake_execute(root, steps, *, runner=None, launcher=None):  # type: ignore[no-untyped-def]
+    def fake_execute(root, steps, *, runner=None, launcher=None, on_outcome=None):  # type: ignore[no-untyped-def]
         captured["root"] = root
         captured["steps"] = steps
-        return [
+        captured["on_outcome"] = on_outcome
+        results = [
             Outcome("create README.md skeleton", "done", "created README.md"),
             Outcome("install dependencies", "done", "ok"),
         ]
+        for outcome in results:
+            if on_outcome is not None:
+                on_outcome(outcome)
+        return results
 
     monkeypatch.setattr("forgefix.cli.execute_plan", fake_execute)
     result = runner.invoke(app, ["up", "--path", str(repo), "--apply"])
@@ -152,14 +166,20 @@ def test_up_apply_reports_outcomes(tmp_path: Path, monkeypatch) -> None:  # type
     assert "[ok] create README.md skeleton - created README.md" in result.stdout
     assert "[forgefix] bring-up complete" in result.stdout
     assert captured["steps"]
+    # the CLI streams: it hands execute_plan a per-step print callback
+    assert captured["on_outcome"] is not None
 
 
 def test_up_apply_failure_exits_1(tmp_path: Path, monkeypatch) -> None:  # type: ignore[no-untyped-def]
     repo = tmp_path / "repo"
     repo.mkdir()
 
-    def fake_execute(root, steps, *, runner=None, launcher=None):  # type: ignore[no-untyped-def]
-        return [Outcome("install dependencies", "failed", "boom\nline two")]
+    def fake_execute(root, steps, *, runner=None, launcher=None, on_outcome=None):  # type: ignore[no-untyped-def]
+        results = [Outcome("install dependencies", "failed", "boom\nline two")]
+        if on_outcome is not None:
+            for outcome in results:
+                on_outcome(outcome)
+        return results
 
     monkeypatch.setattr("forgefix.cli.execute_plan", fake_execute)
     result = runner.invoke(app, ["up", "--path", str(repo), "--apply"])

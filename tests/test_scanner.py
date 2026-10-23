@@ -16,11 +16,12 @@ def status_map(result) -> dict[str, str]:  # type: ignore[no-untyped-def]
     return {finding.rule_id: finding.status for finding in result.findings}
 
 
-def test_broken_repo_scores_exactly_42() -> None:
+def test_broken_repo_scores_exactly_46() -> None:
+    # 46, not 42: dev_env is WARN (-3) since v0.2.0, not FAIL (-7).
     result = scan(BROKEN)
-    assert result.score.total == 42
-    assert result.score.failed == 6
-    assert result.score.warned == 5
+    assert result.score.total == 46
+    assert result.score.failed == 5
+    assert result.score.warned == 6
 
 
 def test_broken_repo_statuses() -> None:
@@ -34,7 +35,7 @@ def test_broken_repo_statuses() -> None:
         "ci": "fail",
         "security": "fail",
         "license": "fail",
-        "dev_env": "fail",
+        "dev_env": "warn",
         "editorconfig": "warn",
     }
 
@@ -144,9 +145,10 @@ def test_readme_without_install_line_warns(tmp_path: Path) -> None:
     assert install.status == "warn"
 
 
-def test_python_project_without_venv_fails_dev_env(tmp_path: Path) -> None:
+def test_python_project_without_venv_warns_dev_env(tmp_path: Path) -> None:
+    # A fresh clone has no .venv yet: WARN, not FAIL (fresh clone UX).
     (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\nversion='0'\n", encoding="utf-8")
-    assert status_map(scan(tmp_path, use_plugins=False))["dev_env"] == "fail"
+    assert status_map(scan(tmp_path, use_plugins=False))["dev_env"] == "warn"
 
 
 def test_python_project_with_venv_passes_dev_env(tmp_path: Path) -> None:
