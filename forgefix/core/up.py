@@ -421,6 +421,13 @@ def plan_up(root: Path, *, serve: bool = True) -> list[Step]:
     return steps
 
 
+def _is_docker_step(argv: Sequence[str]) -> bool:
+    if not argv:
+        return False
+    name = Path(argv[0]).name.lower()
+    return name in {"docker", "docker.exe", "podman", "podman.exe"}
+
+
 def execute_plan(
     root: Path,
     steps: Sequence[Step],
@@ -457,6 +464,20 @@ def execute_plan(
             outcomes.append(Outcome(step.label, "skipped", f"{step.argv[0]} not found on PATH"))
             continue
         argv = (executable, *step.argv[1:])
+
+        if _is_docker_step(argv):
+            executable_name = Path(executable).name.lower()
+            daemon_exe = "docker" if executable_name.startswith("docker") else executable
+            info_code, _info_out = run((daemon_exe, "info"), root)
+            if info_code != 0:
+                outcomes.append(
+                    Outcome(
+                        step.label,
+                        "failed",
+                        "Docker is not running - start Docker and retry",
+                    )
+                )
+                break
 
         if step.kind == "serve":
             try:
