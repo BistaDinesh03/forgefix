@@ -104,7 +104,7 @@ def init(
         raise typer.BadParameter(f"not a directory: {path}", param_hint="--path")
     root.mkdir(parents=True, exist_ok=True)
     if config_file(root).exists():
-        typer.echo(f"[forgefix] {config_file(root).name} already exists - keeping it")
+        typer.echo(f"[forgefix] kept existing {config_file(root).name}")
         return
     written = save_config(root, ForgeFixConfig())
     typer.echo(f"[forgefix] created {written}")

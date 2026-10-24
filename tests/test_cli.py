@@ -40,7 +40,7 @@ def test_init_creates_config_and_keeps_existing(tmp_path: Path) -> None:
     assert result.exit_code == 0
     assert (tmp_path / ".forgefix.yml").is_file()
     second = runner.invoke(app, ["init", "--path", str(tmp_path)])
-    assert "already exists" in second.stdout
+    assert "kept existing" in second.stdout
 
 
 def test_init_on_a_file_errors(tmp_path: Path) -> None:
@@ -188,3 +188,13 @@ def test_cloud_stub_message() -> None:
     result = runner.invoke(app, ["cloud"])
     assert result.exit_code == 0
     assert "Hosted version coming soon - see docs/monetization.md" in result.stdout
+
+
+def test_init_does_not_rewrite_tuned_config(tmp_path: Path) -> None:
+    custom = tmp_path / ".forgefix.yml"
+    body = "report_path: reports/custom.md\ndisabled_rules: [demo]\nmin_score: 55\n"
+    custom.write_text(body, encoding="utf-8")
+    result = runner.invoke(app, ["init", "--path", str(tmp_path)])
+    assert result.exit_code == 0
+    assert "kept existing .forgefix.yml" in result.stdout
+    assert custom.read_text(encoding="utf-8") == body
