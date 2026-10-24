@@ -22,6 +22,8 @@ CHANGELOG_NAMES = (
     "HISTORY.md",
     "HISTORY",
 )
+CITATION_NAMES = ("CITATION.cff", "CITATION.bib", "CITATION")
+FUNDING_NAMES = (".github/FUNDING.yml", ".github/FUNDING.yaml", "FUNDING.yml", "FUNDING.yaml")
 LOCKFILE_NAMES = (
     "requirements.lock",
     "poetry.lock",
@@ -138,6 +140,22 @@ RULES: tuple[Rule, ...] = (
         2,
         "Add a CHANGELOG.md (Keep a Changelog style is fine) so users see what changed "
         "between releases.",
+    ),
+    Rule(
+        "citation",
+        "docs",
+        "Citation file",
+        2,
+        1,
+        'Add a CITATION.cff so GitHub\'s "Cite this repository" and academic tools work.',
+    ),
+    Rule(
+        "funding",
+        "community",
+        "Funding configuration",
+        2,
+        1,
+        "Add .github/FUNDING.yml to surface the sponsor button on the repository page.",
     ),
     Rule(
         "lockfile",

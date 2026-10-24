@@ -16,11 +16,11 @@ def status_map(result) -> dict[str, str]:  # type: ignore[no-untyped-def]
     return {finding.rule_id: finding.status for finding in result.findings}
 
 
-def test_broken_repo_scores_exactly_40() -> None:
+def test_broken_repo_scores_exactly_38() -> None:
     result = scan(BROKEN)
-    assert result.score.total == 40
+    assert result.score.total == 38
     assert result.score.failed == 6
-    assert result.score.warned == 6
+    assert result.score.warned == 8
 
 
 def test_broken_repo_statuses() -> None:
@@ -29,6 +29,8 @@ def test_broken_repo_statuses() -> None:
         "install": "fail",
         "demo": "warn",
         "changelog": "warn",
+        "citation": "warn",
+        "funding": "warn",
         "lockfile": "warn",
         "pinned_deps": "warn",
         "devcontainer": "warn",
@@ -194,3 +196,25 @@ def test_scan_findings_match_rule_suggestions() -> None:
     result = scan(BROKEN, use_plugins=False)
     for finding in result.findings:
         assert finding.suggestion  # every builtin finding carries a fix hint
+
+
+def test_citation_cff_passes(tmp_path: Path) -> None:
+    (tmp_path / "CITATION.cff").write_text("cff-version: 1.2.0\n", encoding="utf-8")
+    assert status_map(scan(tmp_path, use_plugins=False))["citation"] == "pass"
+
+
+def test_missing_citation_warns(tmp_path: Path) -> None:
+    finding = next(f for f in scan(tmp_path, use_plugins=False).findings if f.rule_id == "citation")
+    assert finding.status == "warn"
+
+
+def test_github_funding_yml_passes(tmp_path: Path) -> None:
+    github = tmp_path / ".github"
+    github.mkdir()
+    (github / "FUNDING.yml").write_text("github: [sponsor]\n", encoding="utf-8")
+    assert status_map(scan(tmp_path, use_plugins=False))["funding"] == "pass"
+
+
+def test_missing_funding_warns(tmp_path: Path) -> None:
+    finding = next(f for f in scan(tmp_path, use_plugins=False).findings if f.rule_id == "funding")
+    assert finding.status == "warn"
