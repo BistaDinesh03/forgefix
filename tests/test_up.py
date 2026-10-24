@@ -249,3 +249,31 @@ def test_templates_are_original_and_specific() -> None:
     assert "TODO" in readme
     assert set(CI_TEMPLATES) == {"python", "node", "go", "none"}
     assert "actions/checkout@v4" in CI_TEMPLATES["python"]
+
+
+def test_docker_step_fails_with_daemon_message(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("forgefix.core.up._resolve_exe", lambda name: f"/usr/bin/{name}")
+
+    def runner(argv: tuple[str, ...], cwd: Path) -> tuple[int, str]:
+        if argv[1:2] == ("info",):
+            return 1, "Cannot connect to the Docker daemon"
+        return 0, "should not run"
+
+    step = Step(kind="run", label="docker compose up", argv=("docker", "compose", "up"))
+    outcomes = execute_plan(tmp_path, [step], runner=runner)
+    assert outcomes[0].status == "failed"
+    assert "Docker is not running" in outcomes[0].detail
+
+
+def test_docker_step_runs_when_daemon_is_up(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("forgefix.core.up._resolve_exe", lambda name: f"/usr/bin/{name}")
+
+    def runner(argv: tuple[str, ...], cwd: Path) -> tuple[int, str]:
+        if argv[1:2] == ("info",):
+            return 0, "Server Version: 27"
+        return 0, "started"
+
+    step = Step(kind="run", label="docker compose up", argv=("docker", "compose", "up"))
+    outcomes = execute_plan(tmp_path, [step], runner=runner)
+    assert outcomes[0].status == "done"
+    assert plan_is_clean(outcomes)
