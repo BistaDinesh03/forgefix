@@ -189,6 +189,7 @@ def test_cloud_stub_message() -> None:
     assert result.exit_code == 0
     assert "Hosted version coming soon - see docs/monetization.md" in result.stdout
 
+
 def test_init_does_not_rewrite_tuned_config(tmp_path: Path) -> None:
     custom = tmp_path / ".forgefix.yml"
     body = "report_path: reports/custom.md\ndisabled_rules: [demo]\nmin_score: 55\n"
