@@ -165,6 +165,19 @@ executed, downloaded, or copied:
 Each rule maps 1:1 to the weight table above. Disable rules per repository
 with `.forgefix.yml` (`forgefix init`).
 
+## ForgeFix vs. other tools
+
+| Tool | Scope | What it does not do |
+| --- | --- | --- |
+| **ForgeFix** | Setup + health check + safe repair (README, lockfile, CI, license, …) | Not a language linter; does not rewrite source code |
+| [Ruff](https://docs.astral.sh/ruff/) | Python lint and format | No project health score or bring-up |
+| [pre-commit](https://pre-commit.com/) | Run hooks on commit | No repository health report; you choose the hooks |
+| [GitHub checks](https://docs.github.com/en/actions) | CI for code you already have | No local one-command setup or repair |
+
+See each tool's own documentation for details. ForgeFix is meant to sit beside
+them: it tells you whether a repository is ready to accept contributors, and can
+create the missing setup files.
+
 ## Quickstart
 
 ```bash
