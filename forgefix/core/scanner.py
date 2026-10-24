@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from forgefix.core.rules import (
+    CHANGELOG_NAMES,
     CI_FILES,
     DOCKER_FILES,
     GIF_SEARCH_DIRS,
@@ -74,6 +75,13 @@ def _detect_demo(root: Path) -> tuple[Status, str]:
     if readme is not None and ".gif" in _read_text(readme):
         return "fail", "README links a GIF that does not exist in the repository"
     return "warn", "no demo GIF found (demo/, docs/, assets/, or root)"
+
+
+def _detect_changelog(root: Path) -> tuple[Status, str]:
+    found = _find_named(root, CHANGELOG_NAMES)
+    if found is not None:
+        return "pass", f"{found.name} found"
+    return "warn", "no changelog at the repository root"
 
 
 def _detect_lockfile(root: Path) -> tuple[Status, str]:
@@ -157,6 +165,7 @@ DETECTORS: dict[str, Detector] = {
     "readme": _detect_readme,
     "install": _detect_install,
     "demo": _detect_demo,
+    "changelog": _detect_changelog,
     "lockfile": _detect_lockfile,
     "pinned_deps": _detect_pinned,
     "devcontainer": _detect_devcontainer,

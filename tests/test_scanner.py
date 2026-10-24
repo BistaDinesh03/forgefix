@@ -16,11 +16,11 @@ def status_map(result) -> dict[str, str]:  # type: ignore[no-untyped-def]
     return {finding.rule_id: finding.status for finding in result.findings}
 
 
-def test_broken_repo_scores_exactly_42() -> None:
+def test_broken_repo_scores_exactly_40() -> None:
     result = scan(BROKEN)
-    assert result.score.total == 42
+    assert result.score.total == 40
     assert result.score.failed == 6
-    assert result.score.warned == 5
+    assert result.score.warned == 6
 
 
 def test_broken_repo_statuses() -> None:
@@ -28,6 +28,7 @@ def test_broken_repo_statuses() -> None:
         "readme": "fail",
         "install": "fail",
         "demo": "warn",
+        "changelog": "warn",
         "lockfile": "warn",
         "pinned_deps": "warn",
         "devcontainer": "warn",
@@ -62,7 +63,7 @@ def test_disabled_rules_are_excluded() -> None:
     ids = {finding.rule_id for finding in result.findings}
     assert "readme" not in ids
     assert "editorconfig" not in ids
-    assert len(ids) == len(RULES) - 1  # nine builtin rules remain, plugin excluded
+    assert len(ids) == len(RULES) - 1  # ten builtin rules remain, plugin excluded
 
 
 def test_plugins_can_be_disabled() -> None:
@@ -124,6 +125,21 @@ def test_security_md_inside_dot_github_passes(tmp_path: Path) -> None:
     github.mkdir()
     (github / "SECURITY.md").write_text("# security\n", encoding="utf-8")
     assert status_map(scan(tmp_path, use_plugins=False))["security"] == "pass"
+
+
+def test_changelog_name_variants_pass(tmp_path: Path) -> None:
+    for name in ("CHANGELOG.md", "CHANGELOG", "HISTORY.md"):
+        repo = tmp_path / name.replace(".", "_")
+        repo.mkdir()
+        (repo / name).write_text("# changes\n", encoding="utf-8")
+        assert status_map(scan(repo, use_plugins=False))["changelog"] == "pass"
+
+
+def test_missing_changelog_warns(tmp_path: Path) -> None:
+    finding = next(
+        f for f in scan(tmp_path, use_plugins=False).findings if f.rule_id == "changelog"
+    )
+    assert finding.status == "warn"
 
 
 def test_copying_license_passes(tmp_path: Path) -> None:

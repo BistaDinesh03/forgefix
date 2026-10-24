@@ -100,6 +100,7 @@ scores the same, and unit tests pin the exact numbers.
 | README present | docs | 12 | 6 |
 | One-command install line | docs | 8 | 4 |
 | Demo GIF or screenshot | docs | 3 | 2 |
+| Changelog present | docs | 3 | 2 |
 | Dependency lockfile | deps | 6 | 3 |
 | Pinned dependency versions | deps | 5 | 2 |
 | Dockerfile or devcontainer | automation | 4 | 1 |
@@ -144,7 +145,7 @@ automation | no CI workflow found`).
 
 ## What it checks
 
-Ten built-in rules. A scan reads file names and text only - nothing is
+Eleven built-in rules. A scan reads file names and text only - nothing is
 executed, downloaded, or copied:
 
 | Rule | What it looks for |
@@ -152,6 +153,7 @@ executed, downloaded, or copied:
 | `readme` | A README (`.md`, `.markdown`, `.rst`, `.txt`) at the repository root |
 | `install` | An install line in the README (`pip install`, `npm install`, `make setup`, ...) |
 | `demo` | A `.gif` in the root, `demo/`, `docs/`, `assets/`, `images/`, or `.github/` |
+| `changelog` | A changelog (`CHANGELOG.md`, `CHANGELOG`, `HISTORY.md`, `CHANGES`, ...) at the repository root |
 | `lockfile` | A committed lockfile (`requirements.lock`, `poetry.lock`, `uv.lock`, `package-lock.json`, `yarn.lock`, `go.sum`, `Cargo.lock`) |
 | `pinned_deps` | `==` pins in `requirements.txt`, or a committed lockfile |
 | `devcontainer` | A `Dockerfile`, `Containerfile`, `docker-compose.*`, or `.devcontainer/` |
