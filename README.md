@@ -84,6 +84,8 @@ tests. Scans are read-only and never execute repository code.
 | `forgefix up --apply` | Repair setup, create `.venv`, install, run tests | `forgefix up --apply` |
 | `forgefix report` | Write the markdown health report | `forgefix report --output health.md` |
 | `forgefix serve` | Run the HTTP API (`/health`, `/doctor`, `/report`) | `forgefix serve --port 8000` |
+| `forgefix badge` | Print a live Shields.io badge URL | `forgefix badge --write` |
+| `forgefix share` | Print a ready-to-post score update | `forgefix share` |
 
 `doctor` also emits `--json` for machines. `up` never overwrites an existing file and
 never invents a LICENSE for you.
@@ -272,7 +274,7 @@ forgefix serve                       # http://127.0.0.1:8000
 
 ```console
 $ curl http://127.0.0.1:8000/health
-{"status":"ok","version":"0.1.2"}
+{"status":"ok","version":"0.3.0"}
 
 $ curl "http://127.0.0.1:8000/doctor?path=."
 {"path": "...", "score": {"total": 42, ...}, "findings": [...], "plugins": [...]}
@@ -299,12 +301,48 @@ Run `forgefix init` first to store the threshold in `.forgefix.yml`
 (`min_score`); the file's value applies whenever the flag is absent. `--json`
 prints the score and every finding for downstream steps.
 
+## GitHub Action and live badge
+
+Run ForgeFix on every pull request with the official composite action. It scores
+the branch, scores the base branch, and posts one comment (updated in place) when
+the score is below the threshold or drops:
+
+```yaml
+permissions:
+  contents: write
+  pull-requests: write
+steps:
+  - uses: actions/checkout@v7
+  - uses: BistaDinesh03/forgefix/.github/actions/forgefix@v0.3.0
+    with:
+      threshold: "80"
+      update-badge: ${{ github.event_name == 'push' }}
+```
+
+On `main`, `update-badge` refreshes `.forgefix-badge.json` and commits it only
+when the score changes. Generate the document and the Shields.io snippet
+locally with:
+
+```bash
+forgefix badge --write   # writes .forgefix-badge.json
+forgefix badge           # prints the endpoint URL and markdown
+```
+
+`forgefix up --badge` does the same during a bring-up, and
+`forgefix up --apply --yes` generates missing setup files without prompting.
+Full workflow, inputs, and fork-permission notes:
+[docs/github-action.md](docs/github-action.md).
+
+Show off the result with `forgefix share`, which prints a Rich panel containing
+the score, repository link, and demo GIF.
+
 ## Roadmap
 
 | Version | Focus |
 | --- | --- |
 | v0.2 | Rust and Java/Gradle stack detection · per-rule fix scripts · published JSON schema for `--json` |
-| v0.3 | SARIF export for GitHub code scanning · plugin authoring guide · richer `.forgefix.yml` (per-rule weights) |
+| v0.3 | Shipped: GitHub Action, dynamic badge, real auto-fixes, and `forgefix share` |
+| v0.4 | SARIF export for GitHub code scanning · plugin authoring guide · richer `.forgefix.yml` (per-rule weights) |
 | v1.0 | Stable plugin API · `forgefix cloud` dashboard for private repos ([docs/monetization.md](docs/monetization.md)) · migration guide from 0.x |
 
 ## Contributing

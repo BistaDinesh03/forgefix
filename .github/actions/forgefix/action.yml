@@ -1,0 +1,200 @@
+name: ForgeFix
+description: Score a repository's setup health, comment on PR regressions, and refresh the live badge.
+author: ForgeFix contributors
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  path:
+    description: Repository path to scan.
+    required: false
+    default: "."
+  threshold:
+    description: Minimum acceptable health score (0-100).
+    required: false
+    default: "80"
+  github-token:
+    description: Token used to create or update the pull-request comment.
+    required: false
+    default: ""
+  comment:
+    description: Comment on the pull request when the score is low or drops.
+    required: false
+    default: "true"
+  base-ref:
+    description: Branch to compare against (defaults to the pull request base branch).
+    required: false
+    default: ""
+  update-badge:
+    description: Commit .forgefix-badge.json on main (requires contents write permission).
+    required: false
+    default: "false"
+  install:
+    description: Install from PyPI ("pypi") or from this action's checkout ("source").
+    required: false
+    default: "pypi"
+  version:
+    description: ForgeFix version to install from PyPI (defaults to the latest release).
+    required: false
+    default: ""
+
+outputs:
+  score:
+    description: ForgeFix health score for this checkout.
+    value: ${{ steps.score.outputs.score }}
+  base_score:
+    description: ForgeFix health score for the base branch (empty when unavailable).
+    value: ${{ steps.base.outputs.base_score }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: "3.12"
+
+    - name: Install ForgeFix
+      shell: bash
+      env:
+        INSTALL_SOURCE: ${{ inputs.install }}
+        VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        if [ "$INSTALL_SOURCE" = "source" ]; then
+          python -m pip install "$GITHUB_ACTION_PATH/../.."
+        elif [ -n "$VERSION" ]; then
+          python -m pip install "forgefix==$VERSION"
+        else
+          python -m pip install forgefix
+        fi
+
+    - name: Score this checkout
+      id: score
+      shell: bash
+      env:
+        TARGET: ${{ inputs.path }}
+        REPORT: ${{ runner.temp }}/forgefix.json
+      run: |
+        set -euo pipefail
+        forgefix doctor --path "$TARGET" --json --min-score 0 > "$REPORT"
+        SCORE=$(python -c 'import json, os; print(json.load(open(os.environ["REPORT"], encoding="utf-8"))["score"]["total"])')
+        echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+        echo "ForgeFix score: $SCORE/100"
+
+    - name: Score the base branch
+      id: base
+      if: github.event_name == 'pull_request'
+      shell: bash
+      env:
+        BASE_REF: ${{ inputs.base-ref || github.event.pull_request.base.ref }}
+      run: |
+        set -euo pipefail
+        BASE_DIR="$RUNNER_TEMP/forgefix-base"
+        rm -rf "$BASE_DIR"
+        echo "base_score=" >> "$GITHUB_OUTPUT"
+        if ! git fetch --depth=1 origin "$BASE_REF"; then
+          echo "::warning::Could not fetch $BASE_REF; skipping the regression comparison."
+          exit 0
+        fi
+        if ! git worktree add --detach "$BASE_DIR" FETCH_HEAD; then
+          echo "::warning::Could not check out $BASE_REF; skipping the regression comparison."
+          exit 0
+        fi
+        trap 'git worktree remove --force "$BASE_DIR" >/dev/null 2>&1 || true' EXIT
+        if ! BASE_SCORE=$(forgefix doctor --path "$BASE_DIR" --json --min-score 0 | python -c 'import json, sys; print(json.load(sys.stdin)["score"]["total"])'); then
+          echo "::warning::Could not score $BASE_REF; skipping the regression comparison."
+          exit 0
+        fi
+        echo "base_score=$BASE_SCORE" >> "$GITHUB_OUTPUT"
+        echo "Base score: $BASE_SCORE/100"
+
+    - name: Comment on the pull request
+      if: inputs.comment == 'true' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+      continue-on-error: true
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token || github.token }}
+        REPO: ${{ github.repository }}
+        PR: ${{ github.event.pull_request.number }}
+        SCORE: ${{ steps.score.outputs.score }}
+        BASE_SCORE: ${{ steps.base.outputs.base_score }}
+        THRESHOLD: ${{ inputs.threshold }}
+        REPORT_JSON: ${{ runner.temp }}/forgefix.json
+        PAYLOAD_JSON: ${{ runner.temp }}/forgefix-comment.json
+      run: |
+        set -euo pipefail
+        rm -f "$PAYLOAD_JSON"
+        python - <<'PY'
+        import json
+        import os
+        from pathlib import Path
+
+        report = json.loads(Path(os.environ["REPORT_JSON"]).read_text(encoding="utf-8"))
+        score = int(os.environ["SCORE"])
+        base_raw = os.environ.get("BASE_SCORE", "").strip()
+        base = int(base_raw) if base_raw else None
+        threshold = int(os.environ["THRESHOLD"])
+        dropped = base is not None and score < base
+        if not (score < threshold or dropped):
+            print(f"ForgeFix score {score}/100 is healthy; no comment needed.")
+            raise SystemExit(0)
+
+        if dropped:
+            headline = (
+                f"⚠️ ForgeFix Health Score dropped to {score}/100. "
+                "Run `forgefix doctor` locally to see how to fix it."
+            )
+        else:
+            headline = (
+                f"⚠️ ForgeFix Health Score is {score}/100 (below the {threshold} threshold). "
+                "Run `forgefix doctor` locally to see how to fix it."
+            )
+        lines = ["<!-- forgefix-report -->", headline, ""]
+        if base is not None:
+            delta = score - base
+            sign = f"+{delta}" if delta > 0 else str(delta)
+            lines += [f"**Base:** {base}/100 → **This PR:** {score}/100 ({sign})", ""]
+        fixes = report.get("score", {}).get("top_fixes", [])
+        if fixes:
+            lines.append("**Top fixes:**")
+            for title, suggestion, deduction in fixes[:3]:
+                lines.append(f"- **{title}** (-{deduction}): {suggestion}")
+            lines.append("")
+        lines.append("<sub>Generated by the ForgeFix GitHub Action.</sub>")
+        Path(os.environ["PAYLOAD_JSON"]).write_text(
+            json.dumps({"body": "\n".join(lines)}), encoding="utf-8"
+        )
+        PY
+        if [ ! -f "$PAYLOAD_JSON" ]; then
+          echo "No comment needed."
+          exit 0
+        fi
+        COMMENT_ID=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+          --jq '.[] | select(.body | contains("<!-- forgefix-report -->")) | .id' | head -n 1)
+        if [ -n "$COMMENT_ID" ]; then
+          gh api -X PATCH "repos/$REPO/issues/comments/$COMMENT_ID" --input "$PAYLOAD_JSON"
+        else
+          gh api -X POST "repos/$REPO/issues/$PR/comments" --input "$PAYLOAD_JSON"
+        fi
+
+    - name: Update the health badge
+      if: inputs.update-badge == 'true' && github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      shell: bash
+      env:
+        TARGET: ${{ inputs.path }}
+        BRANCH: ${{ github.ref_name }}
+      run: |
+        set -euo pipefail
+        forgefix badge --path "$TARGET" --write --branch "$BRANCH"
+        cd "$GITHUB_WORKSPACE"
+        git config user.name "forgefix-bot"
+        git config user.email "forgefix-bot@users.noreply.github.com"
+        git add "$TARGET/.forgefix-badge.json"
+        if git diff --cached --quiet; then
+          echo "Badge unchanged."
+          exit 0
+        fi
+        git commit -m "chore: update ForgeFix badge [skip ci]"
+        git push
