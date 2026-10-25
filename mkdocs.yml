@@ -10,6 +10,7 @@ theme:
 nav:
   - Home: index.md
   - CLI: cli.md
+  - GitHub Action: github-action.md
   - Plugins: plugins.md
   - HTTP API: api.md
   - Monetization (roadmap): monetization.md

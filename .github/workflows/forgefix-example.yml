@@ -1,0 +1,40 @@
+# Copy this file to .github/workflows/forgefix.yml in your repository.
+#
+# Outside the ForgeFix repository, replace the local action path with the
+# published action and remove `install: source`:
+#
+#   - uses: BistaDinesh03/forgefix/.github/actions/forgefix@v0.3.0
+#     with:
+#       threshold: "80"
+#       update-badge: ${{ github.event_name == 'push' }}
+#
+# The badge job commits .forgefix-badge.json on main. It needs
+# `contents: write` and a checkout that persists credentials (the default).
+name: ForgeFix
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: forgefix-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  forgefix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Run ForgeFix
+        uses: ./.github/actions/forgefix
+        with:
+          install: source
+          threshold: "80"
+          update-badge: ${{ github.event_name == 'push' }}

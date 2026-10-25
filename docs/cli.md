@@ -28,12 +28,18 @@ One-command bring-up. **Dry-run by default** — nothing runs without `--apply`.
 | `--path DIR` | Repository to bring up (default `.`) |
 | `--apply` | Execute the plan |
 | `--no-serve` | Never start a detected dev server |
+| `--badge` | Write `.forgefix-badge.json` for the current score (refreshed after `--apply`) |
+| `--yes`, `-y` | Create generated files without prompting |
 
 The plan, in order:
 
 1. **Repairs (create-if-missing):** `README.md` skeleton, `SECURITY.md`,
-   `.editorconfig`, `.github/workflows/ci.yml`. Existing files are never touched and a
-   LICENSE is never invented.
+   `CONTRIBUTING.md`, `.env.example`, `Dockerfile`, `.editorconfig`,
+   `.github/workflows/ci.yml`. Existing files are never touched and a LICENSE is
+   never invented. In an interactive terminal, `--apply` lists the files and asks
+   for confirmation; `--yes` skips the prompt. `.env.example` is built from
+   `os.getenv(...)`, `os.environ[...]`, `process.env...`, and `os.Getenv(...)`
+   references found in source files.
 2. **Environment (python):** `.venv` via `python -m venv`, `pip install -e .`
    (+ `pytest` when a `tests/` directory exists).
 3. **Lockfile (python):** `pip freeze --all > requirements.lock`.
@@ -43,6 +49,37 @@ The plan, in order:
 
 Stack detection first-match: `pyproject.toml`/`setup.py`/`setup.cfg`/`requirements.txt`
 → python; `package.json` → node; `go.mod` → go; otherwise none.
+
+## `forgefix badge`
+
+Print a Shields.io endpoint URL for the current score. With `--write`, also
+create `.forgefix-badge.json` in the repository root.
+
+| Flag | Effect |
+| --- | --- |
+| `--path DIR` | Repository to scan (default `.`) |
+| `--write` | Write `.forgefix-badge.json` |
+| `--branch BRANCH` | Branch that hosts the badge document (default `main`) |
+| `--owner OWNER` | GitHub owner (default: detect from the origin remote) |
+| `--repo REPO` | GitHub repository (default: detect from the origin remote) |
+
+The owner/repository pair is read from `GITHUB_REPOSITORY` when set, then from
+`[remote "origin"]` in `.git/config`. Only GitHub remotes are supported.
+
+```bash
+forgefix badge --write
+forgefix badge --branch trunk
+```
+
+## `forgefix share`
+
+Runs the same scan as `doctor` and prints a ready-to-post update in a Rich
+panel, including the repository URL and demo GIF when they can be detected.
+
+| Flag | Effect |
+| --- | --- |
+| `--path DIR` | Repository to scan (default `.`) |
+| `--repo-url URL` | Override the detected repository URL |
 
 ## `forgefix report`
 

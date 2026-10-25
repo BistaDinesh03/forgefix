@@ -14,7 +14,7 @@ body:
     attributes:
       label: Version
       description: Output of `pip show forgefix`, or the release tag you used.
-      placeholder: "0.1.0"
+      placeholder: "0.3.0"
     validations:
       required: true
 

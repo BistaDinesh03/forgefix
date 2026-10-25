@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-25
+
+The viral-release milestone: run ForgeFix on every pull request, display a live
+score badge, generate the missing setup files, and share the result.
+
+### Added
+
+- Official GitHub composite action (`.github/actions/forgefix`): installs
+  ForgeFix, scores the checkout, compares against the base branch, and creates
+  or updates one pull-request comment when the score is below the threshold or
+  regresses
+- `.github/workflows/forgefix-example.yml` and `docs/github-action.md` with a
+  copy-paste workflow, input/output reference, and fork-permission notes
+- `forgefix badge --write` generates `.forgefix-badge.json` in the
+  Shields.io endpoint format; `--branch`, `--owner`, and `--repo` control the
+  generated URL
+- `forgefix up --badge` writes the badge document during a bring-up
+- Automatic badge commit on `main` through the action's `update-badge` input
+  (only when the score changes; the commit uses `[skip ci]`)
+- `forgefix share` prints a Rich panel with the score, repository link, and demo
+  GIF for social posts
+- `forgefix up --apply` now generates missing `SECURITY.md`, `CONTRIBUTING.md`,
+  `.env.example`, and `Dockerfile` files
+- `.env.example` generation scans Python, JavaScript/TypeScript, and Go sources
+  for environment-variable references and writes the keys commented out
+- Stack-specific, non-root Dockerfile templates for Python, Node, Go, and a
+  placeholder for unknown stacks
+- Interactive confirmation before generated files are written; `forgefix up --yes`
+  (or `-y`) bypasses the prompt
+- Tests for file generation, `.env.example` scanning, Dockerfile templates,
+  badge documents/URLs, repository-slug detection, and share text
+
+### Changed
+
+- Version bumped to `0.3.0`
+- `forgefix up` now includes the generated policy, env, and Docker files in its
+  repair plan; existing files are still never overwritten
+- README, CLI reference, and MkDocs navigation document the action, badge, and
+  share command
+
 ## [0.1.2] - 2026-10-12
 
 Documentation and release-tooling patch. No CLI or plugin behavior changes.
@@ -86,7 +126,8 @@ Packaging and documentation release. No CLI or plugin behavior changes.
   multi-stage non-root Docker image, devcontainer, Makefile
 - Docs site (mkdocs-material): index, cli, plugins, api, faq, monetization
 
-[Unreleased]: https://github.com/BistaDinesh03/forgefix/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/BistaDinesh03/forgefix/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/BistaDinesh03/forgefix/compare/v0.1.2...v0.3.0
 [0.1.2]: https://github.com/BistaDinesh03/forgefix/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/BistaDinesh03/forgefix/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/BistaDinesh03/forgefix/releases/tag/v0.1.0

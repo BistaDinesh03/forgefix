@@ -17,11 +17,8 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from forgefix.core.rules import (
-    PYTHON_MANIFEST_NAMES,
-    README_NAMES,
-    SECURITY_NAMES,
-)
+from forgefix.core.fix import plan_fixes
+from forgefix.core.rules import PYTHON_MANIFEST_NAMES, README_NAMES
 
 RUN_TIMEOUT_SECONDS = 600
 
@@ -74,15 +71,6 @@ README_TEMPLATE = """# {name}
 ```bash
 {test}
 ```
-"""
-
-SECURITY_TEMPLATE = """# Security policy
-
-## Reporting a vulnerability
-
-Please open a private security advisory on the repository (or email the
-maintainers) instead of a public issue. We acknowledge reports within 48 hours
-and aim to ship a fix or mitigation within 7 days for high-severity issues.
 """
 
 EDITORCONFIG_TEMPLATE = """root = true
@@ -278,7 +266,7 @@ def detect_serve_command(root: Path, stack: Stack) -> tuple[str, ...] | None:
 
 
 def _repair_steps(root: Path, stack: Stack) -> list[Step]:
-    """Create-if-missing setup files: README, SECURITY.md, .editorconfig, CI."""
+    """Create-if-missing setup files: README, policies, env template, Docker, CI."""
     steps: list[Step] = []
     name = root.name or "project"
     if _find_first(root, README_NAMES) is None:
@@ -292,15 +280,6 @@ def _repair_steps(root: Path, stack: Stack) -> list[Step]:
                     install=_readme_install_command(stack),
                     test=_readme_test_command(stack),
                 ),
-            )
-        )
-    if _find_first(root, SECURITY_NAMES) is None:
-        steps.append(
-            Step(
-                kind="repair",
-                label="create SECURITY.md",
-                target=root / "SECURITY.md",
-                content=SECURITY_TEMPLATE,
             )
         )
     if not (root / ".editorconfig").exists():
@@ -322,6 +301,15 @@ def _repair_steps(root: Path, stack: Stack) -> list[Step]:
                 label="create .github/workflows/ci.yml",
                 target=workflows / "ci.yml",
                 content=CI_TEMPLATES[stack.name],
+            )
+        )
+    for fix in plan_fixes(root, stack.name):
+        steps.append(
+            Step(
+                kind="repair",
+                label=fix.label,
+                target=fix.target,
+                content=fix.content,
             )
         )
     return steps
