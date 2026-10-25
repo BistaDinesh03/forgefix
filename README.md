@@ -34,19 +34,18 @@
 ## Demo
 
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/BistaDinesh03/forgefix@main/demo/demo.gif" alt="ForgeFix fixing a broken repo: score 42 → 91 in one command" width="100%">
+  <img src="https://cdn.jsdelivr.net/gh/BistaDinesh03/forgefix@main/demo/demo.gif" alt="ForgeFix generating a Dockerfile and SECURITY.md, then sharing a 90/100 health score" width="100%">
 </p>
 
 What you are watching:
 
-1. `forgefix doctor` on a deliberately broken repo — an `app.py` and a `pyproject.toml`,
-   but no README, no lockfile, no CI, no security policy. Score: **38/100**.
-2. `forgefix report` — the same findings as markdown, with the highest-value fixes first.
-3. `forgefix up --apply` — creates the missing setup files, makes `.venv`, installs the
-   project, writes `requirements.lock`, and runs the test suite.
-4. `forgefix doctor` again — the same repo now scores **91/100**.
-
-<img src="https://cdn.jsdelivr.net/gh/BistaDinesh03/forgefix@main/assets/badge-score.svg" alt="health: 42 to 91" height="20">
+1. A tiny Node project with no CI, no security policy, and no container recipe.
+2. `forgefix up --apply` — generates `SECURITY.md`, a non-root `Dockerfile`,
+   a CI workflow, and `.env.example`, then runs the real install and test suite.
+3. The generated files on screen: the security policy and the stack-specific
+   container build.
+4. `forgefix share` — a ready-to-post Rich panel with the **90/100** score,
+   repository link, and demo GIF. No screenshot or copy-paste required.
 
 Still frame: [demo/demo-thumb.png](https://cdn.jsdelivr.net/gh/BistaDinesh03/forgefix@main/demo/demo-thumb.png) · MP4 for social:
 [demo/demo.mp4](https://cdn.jsdelivr.net/gh/BistaDinesh03/forgefix@main/demo/demo.mp4)
@@ -301,27 +300,40 @@ Run `forgefix init` first to store the threshold in `.forgefix.yml`
 (`min_score`); the file's value applies whenever the flag is absent. `--json`
 prints the score and every finding for downstream steps.
 
-## GitHub Action and live badge
+## GitHub Action
 
-Run ForgeFix on every pull request with the official composite action. It scores
-the branch, scores the base branch, and posts one comment (updated in place) when
-the score is below the threshold or drops:
+Add ForgeFix to CI with the official composite action. This complete workflow
+scores every pull request, compares it with the base branch, posts one comment
+when health drops, and refreshes the live badge on `main`:
 
 ```yaml
+name: ForgeFix
+on:
+  pull_request:
+  push:
+    branches: [main]
 permissions:
-  contents: write
-  pull-requests: write
-steps:
-  - uses: actions/checkout@v7
-  - uses: BistaDinesh03/forgefix/.github/actions/forgefix@v0.3.0
-    with:
-      threshold: "80"
-      update-badge: ${{ github.event_name == 'push' }}
+  contents: write       # badge commit on main
+  pull-requests: write  # regression comment
+jobs:
+  forgefix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Optional on protected main: a PAT evaluated as the owner.
+          token: ${{ secrets.PUSH_TOKEN || github.token }}
+      - uses: BistaDinesh03/forgefix/.github/actions/forgefix@v0.3.0
+        with:
+          threshold: "80"
+          update-badge: ${{ github.event_name == 'push' }}
 ```
 
-On `main`, `update-badge` refreshes `.forgefix-badge.json` and commits it only
-when the score changes. Generate the document and the Shields.io snippet
-locally with:
+No secrets are required for the health check. The `PUSH_TOKEN` fallback only
+matters when a ruleset blocks the default `GITHUB_TOKEN` from committing the
+badge; the badge step is non-fatal if the push is rejected. On `main`,
+`update-badge` refreshes `.forgefix-badge.json` only when the score changes.
+Generate the document and the Shields.io snippet locally with:
 
 ```bash
 forgefix badge --write   # writes .forgefix-badge.json

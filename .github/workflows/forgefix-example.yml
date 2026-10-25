@@ -10,6 +10,8 @@
 #
 # The badge job commits .forgefix-badge.json on main. It needs
 # `contents: write` and a checkout that persists credentials (the default).
+# On a protected main, set the PUSH_TOKEN secret to a PAT so the badge commit
+# is evaluated as the owner; the fallback keeps forks and simple repos working.
 name: ForgeFix
 
 on:
@@ -31,6 +33,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Optional: lets the badge commit bypass a protected main.
+          token: ${{ secrets.PUSH_TOKEN || github.token }}
 
       - name: Run ForgeFix
         uses: ./.github/actions/forgefix

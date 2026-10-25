@@ -10,6 +10,7 @@ on:
     paths:
       - demo/demo.tape
       - demo/prep_scratch.py
+      - demo/show_generated.py
 
 permissions:
   contents: write
@@ -33,8 +34,8 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-          # Warm the pip cache: the tape's prep step and `forgefix up --apply`
-          # install setuptools/pytest into the scratch venv on camera.
+          # Warm the pip cache for the editable ForgeFix install. The demo's
+          # scratch Node project installs from a local lockfile on camera.
           cache: pip
       - name: Install forgefix (the tape runs the real CLI)
         run: python -m pip install -e .
@@ -72,5 +73,7 @@ jobs:
             echo "demo assets unchanged"
           else
             git commit -m "demo: regenerate demo.gif and demo.mp4 [skip ci]"
+            # The badge workflow can commit to main at the same time.
+            git pull --rebase origin main
             git push
           fi
