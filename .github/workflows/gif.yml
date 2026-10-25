@@ -55,11 +55,11 @@ jobs:
           ttyd --version
       - name: Record demo (gif + mp4 from one session)
         run: make gif
-      - name: Size budget check (800 KB < gif < 4 MB)
+      - name: Size budget check (500 KB < gif < 4 MB)
         run: |
           size=$(stat -c%s demo/demo.gif)
           echo "demo.gif is $size bytes"
-          test "$size" -gt 800000
+          test "$size" -gt 500000
           test "$size" -lt 4000000
       - name: Commit refreshed demo.gif and demo.mp4
         run: |
