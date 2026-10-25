@@ -1,6 +1,7 @@
 """End-to-end CLI tests via Typer's CliRunner."""
 
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -221,7 +222,8 @@ def test_badge_without_remote_exits_2(tmp_path: Path, monkeypatch) -> None:  # t
 def test_badge_rejects_partial_owner_repo(tmp_path: Path) -> None:
     result = runner.invoke(app, ["badge", "--path", str(tmp_path), "--owner", "acme"])
     assert result.exit_code == 2
-    assert "pass both --owner and --repo" in result.output
+    plain_output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+    assert "pass both --owner and --repo" in plain_output
 
 
 def test_badge_accepts_explicit_owner_repo(tmp_path: Path) -> None:

@@ -63,7 +63,7 @@ runs:
       run: |
         set -euo pipefail
         if [ "$INSTALL_SOURCE" = "source" ]; then
-          python -m pip install "$GITHUB_ACTION_PATH/../.."
+          python -m pip install "$GITHUB_ACTION_PATH/../../.."
         elif [ -n "$VERSION" ]; then
           python -m pip install "forgefix==$VERSION"
         else
