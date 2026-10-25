@@ -43,6 +43,17 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends ffmpeg fonts-dejavu-core
+      - name: Install JetBrains Mono
+        run: |
+          # VHS falls back to a wide default font when JetBrains Mono is absent,
+          # which makes the 100-column share panel wrap inside a 1200px window.
+          mkdir -p ~/.local/share/fonts
+          curl -sSL -o /tmp/jetbrains.zip \
+            "https://github.com/JetBrains/JetBrainsMono/releases/download/v2.304/JetBrainsMono-2.304.zip"
+          python -m zipfile -e /tmp/jetbrains.zip /tmp/jetbrains
+          cp /tmp/jetbrains/fonts/ttf/JetBrainsMono-Regular.ttf ~/.local/share/fonts/
+          fc-cache -f
+          fc-match "JetBrains Mono"
       - name: Install vhs and ttyd
         run: |
           curl -sSL -o /tmp/vhs.tar.gz "https://github.com/charmbracelet/vhs/releases/download/v0.12.1/vhs_0.12.1_Linux_x86_64.tar.gz"
