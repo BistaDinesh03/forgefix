@@ -10,7 +10,7 @@ forgefix up          # dry-run bring-up plan
 forgefix up --apply  # repair setup, install deps, run tests
 ```
 
-![ForgeFix fixing a broken repo: score 42 to 91 in one command](https://raw.githubusercontent.com/BistaDinesh03/forgefix/main/demo/demo.gif)
+![ForgeFix generating a Dockerfile and SECURITY.md, then sharing a 90/100 health score](https://raw.githubusercontent.com/BistaDinesh03/forgefix/main/demo/demo.gif)
 
 ## The problem
 

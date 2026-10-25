@@ -27,7 +27,7 @@ inputs:
     required: false
     default: ""
   update-badge:
-    description: Commit .forgefix-badge.json on main (requires contents write permission).
+    description: Commit .forgefix-badge.json on main (requires contents write permission; on a protected main, check out with a PAT).
     required: false
     default: "false"
   install:
@@ -181,6 +181,7 @@ runs:
 
     - name: Update the health badge
       if: inputs.update-badge == 'true' && github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      continue-on-error: true  # a blocked badge push must not fail the health check
       shell: bash
       env:
         TARGET: ${{ inputs.path }}
@@ -197,4 +198,6 @@ runs:
           exit 0
         fi
         git commit -m "chore: update ForgeFix badge [skip ci]"
+        # The demo workflow can commit to main at the same time; rebase first.
+        git pull --rebase origin "$BRANCH"
         git push

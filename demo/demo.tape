@@ -3,66 +3,58 @@
 #
 #   make gif     # writes demo/demo.gif and demo/demo.mp4
 #
-# The session works on a scratch copy of tests/fixtures/broken_repo, so the
-# committed fixture is never mutated and the recording is re-runnable.
-# Commands avoid `ls`/`dir` and quoting so the tape plays the same under
-# vhs's default shell on Windows (cmd.exe) and on the Linux CI recorder.
+# The session works on a scratch Node project so the recording is fast and
+# re-runnable. It shows `up --apply` generating a Dockerfile and SECURITY.md,
+# then `share` printing the ready-to-post panel.
 
 Set FontFamily "JetBrains Mono"
 Set FontSize 18
-Set LineHeight 1.4
+Set LineHeight 1.35
 Set LetterSpacing 0
 Set Width 1200
 Set Height 700
-Set Padding 40
-Set Margin 20
+Set Padding 32
+Set Margin 16
 Set MarginFill "#0F172A"
 Set BorderRadius 12
 Set Theme "Catppuccin Mocha"
 Set WindowBar "Colorful"
-Set WindowBarSize 40
-Set TypingSpeed 45ms
+Set WindowBarSize 36
+Set TypingSpeed 25ms
 Set Framerate 30
 Set PlaybackSpeed 1.1
 
 Output demo/demo.gif
 
 # 1) Title card
-Type "echo ForgeFix - one command to fix any repo's setup"
-Enter
-Sleep 2s
-
-# 2) A deliberately broken repo: app.py + pyproject.toml, nothing else
-#    (scratch copy, so the committed fixture stays pristine)
-Type "python demo/prep_scratch.py"
-Enter
-Sleep 3s
-Type "cd demo-scratch"
+Type "echo ForgeFix 0.3.0 - setup health, fixed in one command"
 Enter
 Sleep 1s
 
-# 3) The health check: 42/100, every gap with a concrete fix
-Type "forgefix doctor"
+# 2) A tiny Node project with a missing setup and a process.env reference
+Type "python demo/prep_scratch.py"
 Enter
-Sleep 3s
-
-# 4) The same findings as markdown, highest-value fixes first
-Type "forgefix report"
+Sleep 1.2s
+Type "cd demo-scratch"
 Enter
-Sleep 2s
+Sleep 0.5s
 
-# 5) The bring-up: missing setup files, .venv, install, lockfile, tests
-#    (outcomes print when the plan finishes, so this waits out the full run)
-Type "forgefix up --apply"
+# 3) Real bring-up: generate files, install, lock, test
+Type "forgefix up --apply --yes --no-serve"
 Enter
-Sleep 45s
+Sleep 10s
 
-# 6) The same repo, now healthy: 91/100
-Type "forgefix doctor"
+# 4) Show the generated SECURITY.md and stack-specific Dockerfile
+Type "python ../demo/show_generated.py"
 Enter
-Sleep 3s
+Sleep 3.5s
 
-# 7) Final card
+# 5) The share panel, including the repo and demo-GIF links
+Type "forgefix share --repo-url https://github.com/BistaDinesh03/forgefix"
+Enter
+Sleep 4s
+
+# 6) Final card
 Type "echo github.com/BistaDinesh03/forgefix - pipx install forgefix"
 Enter
-Sleep 2s
+Sleep 1.5s

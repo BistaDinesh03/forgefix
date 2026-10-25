@@ -2,7 +2,8 @@
 
 The official ForgeFix action scores every pull request, comments when setup
 health regresses, and refreshes a Shields.io badge on `main`. It is a composite
-action: no Docker image, no server, and no secrets beyond `GITHUB_TOKEN`.
+action: no Docker image, no server, and no required secrets beyond
+`GITHUB_TOKEN`. An optional PAT is only needed when `main` is protected.
 
 ## Quick start
 
@@ -25,12 +26,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Optional: lets the badge commit bypass a protected main.
+          token: ${{ secrets.PUSH_TOKEN || github.token }}
       - name: Run ForgeFix
         uses: BistaDinesh03/forgefix/.github/actions/forgefix@v0.3.0
         with:
           threshold: "80"
           update-badge: ${{ github.event_name == 'push' }}
 ```
+
+The fallback means a repository without a `PUSH_TOKEN` secret still works with
+the default `GITHUB_TOKEN` on an unprotected default branch. Add `PUSH_TOKEN`
+when a ruleset requires a pull request or owner bypass for the badge commit.
+The badge step is non-fatal: a blocked push logs a warning but does not fail
+the health check.
 
 The same workflow is checked in at
 [`.github/workflows/forgefix-example.yml`](https://github.com/BistaDinesh03/forgefix/blob/main/.github/workflows/forgefix-example.yml)
@@ -93,9 +103,13 @@ The regression comment looks like:
   failing. If you need comments on fork PRs, use a separate
   `pull_request_target` workflow that does **not** check out or execute the
   fork's code.
-- The badge commit needs `contents: write` and branch protection that allows
-  the bot to push to `main`. The commit message includes `[skip ci]` so the
-  badge update does not trigger another run.
+- The badge commit needs `contents: write`. On an unprotected default branch,
+  the checkout's default `GITHUB_TOKEN` is enough. On a protected `main`, the
+  ruleset rejects the Actions integration as a bypass actor; set a `PUSH_TOKEN`
+  secret (a fine-grained PAT with contents write) and pass it to
+  `actions/checkout` as shown above so the push evaluates as the owner. A
+  blocked badge push is non-fatal. The commit message includes `[skip ci]` so
+  the badge update does not trigger another run.
 
 ## Dynamic badge
 
